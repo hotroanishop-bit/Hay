@@ -4,21 +4,30 @@
  * Settings for upstream API provider, squid proxy, and model mapping
  * 
  * SECURITY: All internal details are hidden from end users
+ * 
+ * PRODUCTION: Set these environment variables:
+ * - LOADIP_API_KEY: API key for LoadIP upstream provider
+ * - PROXY_HOST: Squid proxy host
+ * - PROXY_PORT: Squid proxy port
+ * - PROXY_USERNAME: Squid proxy username
+ * - PROXY_PASSWORD: Squid proxy password
  */
 
 return [
     // Upstream provider configuration (LoadIP API)
     'upstream' => [
         'base_url' => 'https://api.loadip.com/v1',
-        'api_key' => 'sk-80c6f26e1d3336a7-5ahrqn-6975d32c',
+        // Use environment variable in production, fallback to default for dev
+        'api_key' => getenv('LOADIP_API_KEY') ?: 'sk-80c6f26e1d3336a7-5ahrqn-6975d32c',
     ],
     
     // Squid proxy configuration
+    // Use environment variables in production for security
     'proxy' => [
-        'host' => '103.157.204.171',
-        'port' => 3128,
-        'username' => 'morahub_admin',
-        'password' => 'M0r%40Hub%23Pr0xy%242026%21',
+        'host' => getenv('PROXY_HOST') ?: '103.157.204.171',
+        'port' => (int)(getenv('PROXY_PORT') ?: 3128),
+        'username' => getenv('PROXY_USERNAME') ?: 'morahub_admin',
+        'password' => getenv('PROXY_PASSWORD') ?: 'M0r%40Hub%23Pr0xy%242026%21',
     ],
     
     // Model mapping: fake model name => real model name

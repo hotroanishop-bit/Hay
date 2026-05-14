@@ -89,12 +89,13 @@ INSERT INTO providers (name, base_url, api_key_encrypted, is_active) VALUES
 -- -----------------------------------------------------
 -- Seed data: Model Pricing
 -- Prices are per 1,000 tokens (input/output)
+-- IMPORTANT: Use FAKE model names that users see (not real upstream model names)
+-- These must match the model_mapping keys in config/proxy.php
 -- -----------------------------------------------------
 INSERT INTO model_pricing (provider_id, model_name, input_price_per_1k, output_price_per_1k, is_active) VALUES
-    ((SELECT id FROM providers WHERE name = 'OpenAI'), 'gpt-4', 0.030000, 0.060000, 1),
-    ((SELECT id FROM providers WHERE name = 'OpenAI'), 'gpt-3.5-turbo', 0.001500, 0.002000, 1),
-    ((SELECT id FROM providers WHERE name = 'Anthropic'), 'claude-3-opus', 0.015000, 0.075000, 1),
-    ((SELECT id FROM providers WHERE name = 'Anthropic'), 'claude-3-sonnet', 0.003000, 0.015000, 1);
+    -- Fake model names exposed to users (for billing calculations)
+    ((SELECT id FROM providers WHERE name = 'OpenAI'), 'codex-5.4', 0.015000, 0.075000, 1),
+    ((SELECT id FROM providers WHERE name = 'OpenAI'), 'gpt-5-ultra', 0.008000, 0.024000, 1);
 
 -- -----------------------------------------------------
 -- Alter usage_logs table: Add detailed tracking columns
