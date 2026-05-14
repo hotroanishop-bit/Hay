@@ -50,6 +50,9 @@ class AnalyticsController extends BaseController
         // Get hourly distribution
         $hourlyStats = $this->usageLogModel->getHourlyDistribution($userId, 7);
 
+        // Get model-based statistics
+        $modelStats = $this->usageLogModel->getModelStats($userId, 30);
+
         // Get API keys for filtering
         $apiKeys = $this->apiKeyModel->findByUser($userId);
 
@@ -68,6 +71,7 @@ class AnalyticsController extends BaseController
             'dailyStats' => $dailyStats,
             'endpointStats' => $endpointStats,
             'hourlyStats' => $hourlyStats,
+            'modelStats' => $modelStats,
             'apiKeys' => $apiKeys,
             'keyStats' => $keyStats,
             'startDate' => $startDate,

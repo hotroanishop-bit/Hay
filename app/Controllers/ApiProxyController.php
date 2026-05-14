@@ -93,6 +93,7 @@ class ApiProxyController extends BaseController
     public function chatCompletions(): void
     {
         $startTime = microtime(true);
+        $requestId = $this->generateRequestId();
         
         // Get authenticated key info
         $apiKey = $this->getAuthenticatedKey();
@@ -146,9 +147,9 @@ class ApiProxyController extends BaseController
         $priceMultiplier = $this->planService->getPriceMultiplier($userId);
         
         if ($stream) {
-            $this->handleStreamingChatCompletions($body, $model, $apiKeyId, $userId, $priceMultiplier, $estimatedInputTokens, $startTime);
+            $this->handleStreamingChatCompletions($body, $model, $apiKeyId, $userId, $priceMultiplier, $estimatedInputTokens, $startTime, $requestId);
         } else {
-            $this->handleNonStreamingChatCompletions($body, $model, $apiKeyId, $userId, $priceMultiplier, $startTime);
+            $this->handleNonStreamingChatCompletions($body, $model, $apiKeyId, $userId, $priceMultiplier, $startTime, $requestId);
         }
     }
 
@@ -161,7 +162,8 @@ class ApiProxyController extends BaseController
         int $apiKeyId,
         int $userId,
         float $priceMultiplier,
-        float $startTime
+        float $startTime,
+        string $requestId
     ): void {
         // Forward request to upstream
         $response = $this->proxyService->forwardRequest($body, $model, false);
@@ -171,7 +173,7 @@ class ApiProxyController extends BaseController
         
         // Check for error response
         if (isset($response['error'])) {
-            $this->logUsage($apiKeyId, $userId, '/v1/chat/completions', 0, 0, $responseTimeMs);
+            $this->logUsage($apiKeyId, $userId, '/v1/chat/completions', 0, 0, 0, $responseTimeMs, $model, $requestId);
             $this->json($response, $this->getErrorStatusCode($response['error']['type'] ?? 'api_error'));
         }
         
@@ -191,8 +193,8 @@ class ApiProxyController extends BaseController
         // Calculate cost for logging
         $cost = $this->creditService->estimateCost($model, $promptTokens, $completionTokens, $priceMultiplier);
         
-        // Log usage
-        $this->logUsage($apiKeyId, $userId, '/v1/chat/completions', $totalTokens, $cost, $responseTimeMs);
+        // Log usage with detailed tracking
+        $this->logUsage($apiKeyId, $userId, '/v1/chat/completions', $totalTokens, $cost, $promptTokens, $responseTimeMs, $model, $requestId, $completionTokens);
         
         // Increment API key usage count
         $this->apiKeyModel->incrementUsage($apiKeyId);
@@ -210,7 +212,8 @@ class ApiProxyController extends BaseController
         int $userId,
         float $priceMultiplier,
         int $estimatedInputTokens,
-        float $startTime
+        float $startTime,
+        string $requestId
     ): void {
         // Set headers for SSE
         header('Content-Type: text/event-stream');
@@ -257,8 +260,8 @@ class ApiProxyController extends BaseController
         // Calculate cost for logging
         $cost = $this->creditService->estimateCost($model, $estimatedInputTokens, $outputTokens, $priceMultiplier);
         
-        // Log usage
-        $this->logUsage($apiKeyId, $userId, '/v1/chat/completions', $totalTokens, $cost, $responseTimeMs);
+        // Log usage with detailed tracking
+        $this->logUsage($apiKeyId, $userId, '/v1/chat/completions', $totalTokens, $cost, $estimatedInputTokens, $responseTimeMs, $model, $requestId, $outputTokens);
         
         // Increment API key usage count
         $this->apiKeyModel->incrementUsage($apiKeyId);
@@ -273,6 +276,7 @@ class ApiProxyController extends BaseController
     public function completions(): void
     {
         $startTime = microtime(true);
+        $requestId = $this->generateRequestId();
         
         // Get authenticated key info
         $apiKeyId = (int) ($_SERVER['API_KEY_ID'] ?? 0);
@@ -338,9 +342,9 @@ class ApiProxyController extends BaseController
         $chatBody['messages'] = $messages;
         
         if ($stream) {
-            $this->handleStreamingCompletions($chatBody, $model, $apiKeyId, $userId, $priceMultiplier, $estimatedInputTokens, $startTime);
+            $this->handleStreamingCompletions($chatBody, $model, $apiKeyId, $userId, $priceMultiplier, $estimatedInputTokens, $startTime, $requestId);
         } else {
-            $this->handleNonStreamingCompletions($chatBody, $model, $apiKeyId, $userId, $priceMultiplier, $startTime);
+            $this->handleNonStreamingCompletions($chatBody, $model, $apiKeyId, $userId, $priceMultiplier, $startTime, $requestId);
         }
     }
 
@@ -353,7 +357,8 @@ class ApiProxyController extends BaseController
         int $apiKeyId,
         int $userId,
         float $priceMultiplier,
-        float $startTime
+        float $startTime,
+        string $requestId
     ): void {
         // Forward request
         $response = $this->proxyService->forwardRequest($body, $model, false);
@@ -363,7 +368,7 @@ class ApiProxyController extends BaseController
         
         // Check for error
         if (isset($response['error'])) {
-            $this->logUsage($apiKeyId, $userId, '/v1/completions', 0, 0, $responseTimeMs);
+            $this->logUsage($apiKeyId, $userId, '/v1/completions', 0, 0, 0, $responseTimeMs, $model, $requestId);
             $this->json($response, $this->getErrorStatusCode($response['error']['type'] ?? 'api_error'));
         }
         
@@ -382,8 +387,8 @@ class ApiProxyController extends BaseController
         // Calculate cost
         $cost = $this->creditService->estimateCost($model, $promptTokens, $completionTokens, $priceMultiplier);
         
-        // Log usage
-        $this->logUsage($apiKeyId, $userId, '/v1/completions', $totalTokens, $cost, $responseTimeMs);
+        // Log usage with detailed tracking
+        $this->logUsage($apiKeyId, $userId, '/v1/completions', $totalTokens, $cost, $promptTokens, $responseTimeMs, $model, $requestId, $completionTokens);
         
         // Increment usage
         $this->apiKeyModel->incrementUsage($apiKeyId);
@@ -404,7 +409,8 @@ class ApiProxyController extends BaseController
         int $userId,
         float $priceMultiplier,
         int $estimatedInputTokens,
-        float $startTime
+        float $startTime,
+        string $requestId
     ): void {
         // Set headers for SSE
         header('Content-Type: text/event-stream');
@@ -449,8 +455,8 @@ class ApiProxyController extends BaseController
         // Calculate cost
         $cost = $this->creditService->estimateCost($model, $estimatedInputTokens, $outputTokens, $priceMultiplier);
         
-        // Log usage
-        $this->logUsage($apiKeyId, $userId, '/v1/completions', $totalTokens, $cost, $responseTimeMs);
+        // Log usage with detailed tracking
+        $this->logUsage($apiKeyId, $userId, '/v1/completions', $totalTokens, $cost, $estimatedInputTokens, $responseTimeMs, $model, $requestId, $outputTokens);
         
         // Increment usage
         $this->apiKeyModel->incrementUsage($apiKeyId);
@@ -499,6 +505,7 @@ class ApiProxyController extends BaseController
     public function embeddings(): void
     {
         $startTime = microtime(true);
+        $requestId = $this->generateRequestId();
         
         // Get authenticated key info
         $apiKeyId = (int) ($_SERVER['API_KEY_ID'] ?? 0);
@@ -558,7 +565,7 @@ class ApiProxyController extends BaseController
         
         // Check for error
         if (isset($response['error'])) {
-            $this->logUsage($apiKeyId, $userId, '/v1/embeddings', 0, 0, $responseTimeMs);
+            $this->logUsage($apiKeyId, $userId, '/v1/embeddings', 0, 0, 0, $responseTimeMs, $model, $requestId);
             $this->json($response, $this->getErrorStatusCode($response['error']['type'] ?? 'api_error'));
         }
         
@@ -576,8 +583,8 @@ class ApiProxyController extends BaseController
         // Calculate cost
         $cost = $this->creditService->estimateCost($model, $promptTokens, 0, $priceMultiplier);
         
-        // Log usage
-        $this->logUsage($apiKeyId, $userId, '/v1/embeddings', $totalTokens, $cost, $responseTimeMs);
+        // Log usage with detailed tracking
+        $this->logUsage($apiKeyId, $userId, '/v1/embeddings', $totalTokens, $cost, $promptTokens, $responseTimeMs, $model, $requestId, 0);
         
         // Increment usage
         $this->apiKeyModel->incrementUsage($apiKeyId);
@@ -622,7 +629,7 @@ class ApiProxyController extends BaseController
     }
 
     /**
-     * Log API usage to database
+     * Log API usage to database with detailed tracking
      */
     private function logUsage(
         int $apiKeyId,
@@ -630,14 +637,23 @@ class ApiProxyController extends BaseController
         string $endpoint,
         int $tokensUsed,
         float $cost,
-        int $responseTimeMs
+        int $inputTokens = 0,
+        int $responseTimeMs = 0,
+        string $model = '',
+        string $requestId = '',
+        int $outputTokens = 0
     ): void {
         try {
-            $this->usageLogModel->logUsage([
+            $this->usageLogModel->logApiRequest([
                 'api_key_id' => $apiKeyId,
                 'user_id' => $userId,
                 'endpoint' => $endpoint,
                 'tokens_used' => $tokensUsed,
+                'input_tokens' => $inputTokens,
+                'output_tokens' => $outputTokens,
+                'model' => $model ?: null,
+                'response_time_ms' => $responseTimeMs,
+                'request_id' => $requestId ?: null,
                 'cost' => $cost,
                 'ip_address' => $_SERVER['REMOTE_ADDR'] ?? '',
                 'response_code' => http_response_code(),
@@ -645,6 +661,23 @@ class ApiProxyController extends BaseController
         } catch (Exception $e) {
             error_log('Usage logging failed: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Generate a UUID-like request ID for tracking
+     * 
+     * @return string UUID v4 format string
+     */
+    private function generateRequestId(): string
+    {
+        return sprintf(
+            '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0x0fff) | 0x4000,
+            mt_rand(0, 0x3fff) | 0x8000,
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+        );
     }
 
     /**

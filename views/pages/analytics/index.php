@@ -181,3 +181,106 @@
         </div>
     </div>
 </div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h3>API Usage by Model</h3>
+            </div>
+            <div class="card-body">
+                <?php if (!empty($modelStats)): ?>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Model</th>
+                                <th>Total Requests</th>
+                                <th>Input Tokens</th>
+                                <th>Output Tokens</th>
+                                <th>Total Tokens</th>
+                                <th>Total Cost</th>
+                                <th>Avg Tokens/Request</th>
+                                <th>Avg Response Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($modelStats as $model): ?>
+                            <tr>
+                                <td><code><?= htmlspecialchars($model['model'] ?? 'unknown') ?></code></td>
+                                <td><?= number_format($model['total_requests'] ?? 0) ?></td>
+                                <td><?= number_format($model['total_input_tokens'] ?? 0) ?></td>
+                                <td><?= number_format($model['total_output_tokens'] ?? 0) ?></td>
+                                <td><?= number_format($model['total_tokens'] ?? 0) ?></td>
+                                <td>$<?= number_format($model['total_cost'] ?? 0, 4) ?></td>
+                                <td><?= number_format($model['avg_tokens_per_request'] ?? 0, 1) ?></td>
+                                <td><?= number_format($model['avg_response_time_ms'] ?? 0, 0) ?>ms</td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                        <tfoot>
+                            <?php
+                            $totalModelRequests = array_sum(array_column($modelStats, 'total_requests'));
+                            $totalModelInputTokens = array_sum(array_column($modelStats, 'total_input_tokens'));
+                            $totalModelOutputTokens = array_sum(array_column($modelStats, 'total_output_tokens'));
+                            $totalModelTokens = array_sum(array_column($modelStats, 'total_tokens'));
+                            $totalModelCost = array_sum(array_column($modelStats, 'total_cost'));
+                            ?>
+                            <tr class="table-footer-row">
+                                <td><strong>Total</strong></td>
+                                <td><strong><?= number_format($totalModelRequests) ?></strong></td>
+                                <td><strong><?= number_format($totalModelInputTokens) ?></strong></td>
+                                <td><strong><?= number_format($totalModelOutputTokens) ?></strong></td>
+                                <td><strong><?= number_format($totalModelTokens) ?></strong></td>
+                                <td><strong>$<?= number_format($totalModelCost, 4) ?></strong></td>
+                                <td>-</td>
+                                <td>-</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <!-- Cost Breakdown by Model -->
+                <div class="mt-4">
+                    <h4>Cost Breakdown by Model</h4>
+                    <div class="cost-breakdown">
+                        <?php if ($totalModelCost > 0): ?>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Model</th>
+                                    <th>Cost</th>
+                                    <th>% of Total</th>
+                                    <th>Breakdown</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($modelStats as $model): ?>
+                                <?php 
+                                $costPercentage = $totalModelCost > 0 ? ($model['total_cost'] / $totalModelCost) * 100 : 0;
+                                ?>
+                                <tr>
+                                    <td><code><?= htmlspecialchars($model['model'] ?? 'unknown') ?></code></td>
+                                    <td>$<?= number_format($model['total_cost'] ?? 0, 4) ?></td>
+                                    <td><?= number_format($costPercentage, 1) ?>%</td>
+                                    <td>
+                                        <div class="progress" style="height: 20px; min-width: 100px;">
+                                            <div class="progress-bar" role="progressbar" style="width: <?= $costPercentage ?>%;" aria-valuenow="<?= $costPercentage ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                        <?php else: ?>
+                        <p class="text-muted">No cost data available</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php else: ?>
+                <p class="text-muted">No model usage data available</p>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>

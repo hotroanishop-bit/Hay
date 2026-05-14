@@ -95,3 +95,19 @@ INSERT INTO model_pricing (provider_id, model_name, input_price_per_1k, output_p
     ((SELECT id FROM providers WHERE name = 'OpenAI'), 'gpt-3.5-turbo', 0.001500, 0.002000, 1),
     ((SELECT id FROM providers WHERE name = 'Anthropic'), 'claude-3-opus', 0.015000, 0.075000, 1),
     ((SELECT id FROM providers WHERE name = 'Anthropic'), 'claude-3-sonnet', 0.003000, 0.015000, 1);
+
+-- -----------------------------------------------------
+-- Alter usage_logs table: Add detailed tracking columns
+-- -----------------------------------------------------
+ALTER TABLE usage_logs 
+    ADD COLUMN input_tokens INT UNSIGNED DEFAULT 0 AFTER tokens_used,
+    ADD COLUMN output_tokens INT UNSIGNED DEFAULT 0 AFTER input_tokens,
+    ADD COLUMN model VARCHAR(100) NULL AFTER output_tokens,
+    ADD COLUMN response_time_ms INT UNSIGNED DEFAULT 0 AFTER model,
+    ADD COLUMN request_id VARCHAR(36) NULL AFTER response_time_ms;
+
+-- Add indexes for efficient querying
+ALTER TABLE usage_logs
+    ADD INDEX idx_usage_logs_model (model),
+    ADD INDEX idx_usage_logs_response_time_ms (response_time_ms),
+    ADD INDEX idx_usage_logs_request_id (request_id);
