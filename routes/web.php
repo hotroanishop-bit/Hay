@@ -15,6 +15,17 @@
 
 $routes = [
     // =====================
+    // Landing Page (Public)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/',
+        'controller' => LandingController::class,
+        'action' => 'index',
+        'middleware' => []
+    ],
+
+    // =====================
     // API Documentation (Public)
     // =====================
     [
@@ -145,13 +156,6 @@ $routes = [
     // =====================
     // Dashboard Routes (Auth Required)
     // =====================
-    [
-        'method' => 'GET',
-        'path' => '/',
-        'controller' => DashboardController::class,
-        'action' => 'index',
-        'middleware' => [AuthMiddleware::class]
-    ],
     [
         'method' => 'GET',
         'path' => '/dashboard',
