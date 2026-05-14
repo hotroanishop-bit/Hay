@@ -935,14 +935,23 @@ class AdminController extends BaseController
             return;
         }
 
-        // Load current settings from config
-        $config = require CONFIG_PATH . '/app.php';
+        // Load settings from SettingsService (database)
+        $settingsService = new SettingsService();
+        $settings = $settingsService->getAll();
+        
+        // Load plans for default_plan dropdown
+        $plans = $this->planModel->findActive();
+        
+        // Load bank list for bank dropdown
+        $bankList = $settingsService->getBankList();
 
         $this->currentPage = 'admin-settings';
         $this->render('admin/settings', [
             'pageTitle' => 'Admin - Settings',
             'currentPage' => $this->currentPage,
-            'config' => $config
+            'settings' => $settings,
+            'plans' => $plans,
+            'bankList' => $bankList
         ], ['admin'], ['admin']);
     }
 
@@ -955,22 +964,165 @@ class AdminController extends BaseController
             return;
         }
 
-        $user = $this->authService->user();
-
-        // Get settings from POST
-        $settings = [
-            'app_name' => trim($_POST['app_name'] ?? ''),
-            'maintenance_mode' => isset($_POST['maintenance_mode']) ? 1 : 0,
-            'registration_enabled' => isset($_POST['registration_enabled']) ? 1 : 0,
-            'default_credits' => (float)($_POST['default_credits'] ?? 0),
-            'rate_limit_enabled' => isset($_POST['rate_limit_enabled']) ? 1 : 0
+        $admin = $this->authService->user();
+        $settingsService = new SettingsService();
+        
+        // Define settings configuration with validation types
+        $settingsConfig = [
+            // General Settings
+            'site_name' => ['type' => 'string', 'required' => true],
+            'site_url' => ['type' => 'string', 'required' => true, 'validate' => 'url'],
+            'logo_url' => ['type' => 'string', 'required' => false, 'validate' => 'url_or_empty'],
+            'favicon_url' => ['type' => 'string', 'required' => false, 'validate' => 'url_or_empty'],
+            
+            // Maintenance Settings
+            'maintenance_mode' => ['type' => 'bool', 'required' => false],
+            'maintenance_message' => ['type' => 'string', 'required' => false],
+            
+            // Payment Settings (VietQR)
+            'bank_name' => ['type' => 'string', 'required' => true],
+            'bank_account_number' => ['type' => 'string', 'required' => true],
+            'account_holder_name' => ['type' => 'string', 'required' => true],
+            
+            // Email Settings (SMTP)
+            'smtp_host' => ['type' => 'string', 'required' => false],
+            'smtp_port' => ['type' => 'int', 'required' => false, 'min' => 1, 'max' => 65535],
+            'smtp_username' => ['type' => 'string', 'required' => false],
+            'smtp_password' => ['type' => 'string', 'required' => false, 'sensitive' => true],
+            'smtp_encryption' => ['type' => 'string', 'required' => false],
+            
+            // Limits Settings
+            'default_plan_id' => ['type' => 'int', 'required' => false],
+            'min_deposit' => ['type' => 'int', 'required' => false, 'min' => 1000],
+            'max_deposit' => ['type' => 'int', 'required' => false, 'min' => 1000],
         ];
+        
+        $errors = [];
+        $changedSettings = [];
+        
+        foreach ($settingsConfig as $key => $config) {
+            // Get the posted value
+            if ($config['type'] === 'bool') {
+                $newValue = isset($_POST[$key]) ? true : false;
+            } else {
+                $newValue = trim($_POST[$key] ?? '');
+            }
+            
+            // Get current value for comparison
+            $oldValue = $settingsService->get($key);
+            
+            // Handle SMTP password specially - skip if empty (keep existing)
+            if ($key === 'smtp_password' && empty($newValue)) {
+                continue;
+            }
+            
+            // Validate required fields
+            if (!empty($config['required']) && empty($newValue) && $newValue !== false && $newValue !== 0) {
+                $errors[] = ucfirst(str_replace('_', ' ', $key)) . ' is required.';
+                continue;
+            }
+            
+            // Validate URLs
+            if (!empty($config['validate'])) {
+                if ($config['validate'] === 'url' && !filter_var($newValue, FILTER_VALIDATE_URL)) {
+                    $errors[] = ucfirst(str_replace('_', ' ', $key)) . ' must be a valid URL.';
+                    continue;
+                }
+                if ($config['validate'] === 'url_or_empty' && !empty($newValue) && !filter_var($newValue, FILTER_VALIDATE_URL)) {
+                    $errors[] = ucfirst(str_replace('_', ' ', $key)) . ' must be a valid URL or empty.';
+                    continue;
+                }
+            }
+            
+            // Validate numeric ranges
+            if ($config['type'] === 'int') {
+                $newValue = (int) $newValue;
+                if (isset($config['min']) && $newValue < $config['min']) {
+                    $errors[] = ucfirst(str_replace('_', ' ', $key)) . ' must be at least ' . number_format($config['min']) . '.';
+                    continue;
+                }
+                if (isset($config['max']) && $newValue > $config['max']) {
+                    $errors[] = ucfirst(str_replace('_', ' ', $key)) . ' must be at most ' . number_format($config['max']) . '.';
+                    continue;
+                }
+            }
+            
+            // Cast type
+            if ($config['type'] === 'int') {
+                $newValue = (int) $newValue;
+            } elseif ($config['type'] === 'bool') {
+                $newValue = (bool) $newValue;
+            }
+            
+            // Check if value has changed
+            if ($oldValue !== $newValue) {
+                $changedSettings[$key] = [
+                    'old' => $oldValue,
+                    'new' => $newValue,
+                    'sensitive' => !empty($config['sensitive'])
+                ];
+            }
+        }
+        
+        // Validate min_deposit < max_deposit
+        $minDeposit = (int) ($_POST['min_deposit'] ?? 0);
+        $maxDeposit = (int) ($_POST['max_deposit'] ?? 0);
+        if ($minDeposit > 0 && $maxDeposit > 0 && $minDeposit > $maxDeposit) {
+            $errors[] = 'Minimum deposit cannot be greater than maximum deposit.';
+        }
+        
+        // If validation errors, redirect back with errors
+        if (!empty($errors)) {
+            $this->setFlash('error', implode('<br>', $errors));
+            $this->redirect('/admin/settings');
+            return;
+        }
+        
+        // Save each changed setting
+        foreach ($changedSettings as $key => $change) {
+            $type = 'string';
+            if (is_bool($change['new'])) {
+                $type = 'bool';
+            } elseif (is_int($change['new'])) {
+                $type = 'int';
+            }
+            
+            $settingsService->set($key, $change['new'], $type);
+        }
+        
+        // Log audit action for all changed settings (excluding sensitive values)
+        if (!empty($changedSettings)) {
+            $oldValues = [];
+            $newValues = [];
+            
+            foreach ($changedSettings as $key => $change) {
+                if ($change['sensitive']) {
+                    // Don't log sensitive values like passwords
+                    $oldValues[$key] = '[REDACTED]';
+                    $newValues[$key] = '[REDACTED]';
+                } else {
+                    $oldValues[$key] = $change['old'];
+                    $newValues[$key] = $change['new'];
+                }
+            }
+            
+            $this->auditLogModel->logAction(
+                $admin['id'],
+                'settings_updated',
+                'settings',
+                null,
+                $oldValues,
+                $newValues,
+                $this->getClientIP()
+            );
+        }
 
-        // Log the settings change
-        $this->auditService->log($user['id'], 'settings_updated', $settings);
-
-        // In a real app, this would save to database or config file
-        $this->setFlash('success', 'Settings updated successfully');
+        $count = count($changedSettings);
+        if ($count > 0) {
+            $this->setFlash('success', $count . ' setting(s) updated successfully.');
+        } else {
+            $this->setFlash('info', 'No settings were changed.');
+        }
         $this->redirect('/admin/settings');
     }
 
