@@ -75,6 +75,63 @@ $routes = [
     ],
 
     // =====================
+    // Password Reset Routes (Public)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/forgot-password',
+        'controller' => AuthController::class,
+        'action' => 'showForgotPassword',
+        'middleware' => []
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/forgot-password',
+        'controller' => AuthController::class,
+        'action' => 'forgotPassword',
+        'middleware' => []
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/reset-password',
+        'controller' => AuthController::class,
+        'action' => 'showResetPassword',
+        'middleware' => []
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/reset-password',
+        'controller' => AuthController::class,
+        'action' => 'resetPassword',
+        'middleware' => []
+    ],
+
+    // =====================
+    // Email Verification Routes (Public)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/verify-email',
+        'controller' => AuthController::class,
+        'action' => 'showVerifyEmail',
+        'middleware' => []
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/verify-email/confirm',
+        'controller' => AuthController::class,
+        'action' => 'verifyEmail',
+        'middleware' => []
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/resend-verification',
+        'controller' => AuthController::class,
+        'action' => 'resendVerification',
+        'middleware' => []
+    ],
+
+    // =====================
     // Dashboard Routes (Auth Required)
     // =====================
     [
@@ -89,6 +146,73 @@ $routes = [
         'path' => '/dashboard',
         'controller' => DashboardController::class,
         'action' => 'index',
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    // =====================
+    // Profile Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/profile',
+        'controller' => ProfileController::class,
+        'action' => 'index',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/profile/update',
+        'controller' => ProfileController::class,
+        'action' => 'update',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/profile/password',
+        'controller' => ProfileController::class,
+        'action' => 'showPassword',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/profile/password',
+        'controller' => ProfileController::class,
+        'action' => 'updatePassword',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/profile/avatar',
+        'controller' => ProfileController::class,
+        'action' => 'uploadAvatar',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/profile/2fa',
+        'controller' => ProfileController::class,
+        'action' => 'show2FA',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/profile/2fa/enable',
+        'controller' => ProfileController::class,
+        'action' => 'enable2FA',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/profile/2fa/disable',
+        'controller' => ProfileController::class,
+        'action' => 'disable2FA',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/profile/delete',
+        'controller' => ProfileController::class,
+        'action' => 'deleteAccount',
         'middleware' => [AuthMiddleware::class]
     ],
 

@@ -1,20 +1,25 @@
 <?php
 /**
  * Auth Controller
- * Handles user authentication, registration, and 2FA
+ * Handles user authentication, registration, 2FA, password reset, and email verification
  */
 
 class AuthController extends BaseController
 {
     private AuthService $authService;
     private AuditService $auditService;
+    private User $userModel;
+    private PasswordResetService $passwordResetService;
+    private EmailVerificationService $emailVerificationService;
 
     public function __construct()
     {
         $sessionService = new SessionService();
-        $userModel = new User();
-        $this->authService = new AuthService($sessionService, $userModel);
+        $this->userModel = new User();
+        $this->authService = new AuthService($sessionService, $this->userModel);
         $this->auditService = new AuditService();
+        $this->passwordResetService = new PasswordResetService();
+        $this->emailVerificationService = new EmailVerificationService();
     }
 
     /**
@@ -135,12 +140,205 @@ class AuthController extends BaseController
                 'password' => $password
             ]);
 
+            // Get the newly created user
+            $user = $this->userModel->find($userId);
+
+            // Send verification email
+            if ($user) {
+                $this->emailVerificationService->sendVerificationEmail($user);
+            }
+
             $this->auditService->log($userId, 'user_registered', ['email' => $email]);
-            $this->setFlash('success', 'Account created successfully. Please log in.');
-            $this->redirect('/login');
+            $this->setFlash('success', 'Account created successfully. Please check your email to verify your account.');
+            $this->redirect('/verify-email');
         } catch (Exception $e) {
             $this->setFlash('error', $e->getMessage());
             $this->redirect('/register');
+        }
+    }
+
+    /**
+     * Show forgot password page
+     */
+    public function showForgotPassword(): void
+    {
+        // Redirect if already logged in
+        if ($this->authService->check()) {
+            $this->redirect('/dashboard');
+            return;
+        }
+
+        $this->currentPage = 'forgot-password';
+        $this->render('auth/forgot_password', [
+            'pageTitle' => 'Forgot Password',
+            'currentPage' => $this->currentPage
+        ], ['auth'], ['auth']);
+    }
+
+    /**
+     * Process forgot password form
+     */
+    public function forgotPassword(): void
+    {
+        $email = trim($_POST['email'] ?? '');
+
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->setFlash('error', 'Please enter a valid email address');
+            $this->redirect('/forgot-password');
+            return;
+        }
+
+        // Send reset email (returns true even if user not found to prevent enumeration)
+        $this->passwordResetService->sendResetEmail($email);
+
+        $this->setFlash('success', 'If an account with that email exists, you will receive a password reset link shortly.');
+        $this->redirect('/forgot-password');
+    }
+
+    /**
+     * Show reset password page
+     */
+    public function showResetPassword(): void
+    {
+        // Redirect if already logged in
+        if ($this->authService->check()) {
+            $this->redirect('/dashboard');
+            return;
+        }
+
+        $token = $_GET['token'] ?? '';
+        $email = $_GET['email'] ?? '';
+
+        if (empty($token) || empty($email)) {
+            $this->setFlash('error', 'Invalid password reset link');
+            $this->redirect('/forgot-password');
+            return;
+        }
+
+        $this->currentPage = 'reset-password';
+        $this->render('auth/reset_password', [
+            'pageTitle' => 'Reset Password',
+            'currentPage' => $this->currentPage,
+            'token' => $token,
+            'email' => $email
+        ], ['auth'], ['auth']);
+    }
+
+    /**
+     * Process password reset form
+     */
+    public function resetPassword(): void
+    {
+        $token = $_POST['token'] ?? '';
+        $email = $_POST['email'] ?? '';
+        $password = $_POST['password'] ?? '';
+        $passwordConfirm = $_POST['password_confirm'] ?? '';
+
+        // Validate
+        if (empty($token) || empty($email)) {
+            $this->setFlash('error', 'Invalid password reset request');
+            $this->redirect('/forgot-password');
+            return;
+        }
+
+        if (strlen($password) < 8) {
+            $this->setFlash('error', 'Password must be at least 8 characters');
+            $this->redirect('/reset-password?token=' . urlencode($token) . '&email=' . urlencode($email));
+            return;
+        }
+
+        if ($password !== $passwordConfirm) {
+            $this->setFlash('error', 'Passwords do not match');
+            $this->redirect('/reset-password?token=' . urlencode($token) . '&email=' . urlencode($email));
+            return;
+        }
+
+        // Attempt password reset
+        if ($this->passwordResetService->resetPassword($email, $token, $password)) {
+            $user = $this->userModel->findByEmail($email);
+            if ($user) {
+                $this->auditService->log($user['id'], 'password_reset_completed', []);
+            }
+            
+            $this->setFlash('success', 'Your password has been reset. You can now log in.');
+            $this->redirect('/login');
+        } else {
+            $this->setFlash('error', 'Invalid or expired password reset link');
+            $this->redirect('/forgot-password');
+        }
+    }
+
+    /**
+     * Show email verification waiting page
+     */
+    public function showVerifyEmail(): void
+    {
+        $this->currentPage = 'verify-email';
+        $this->render('auth/verify_email', [
+            'pageTitle' => 'Verify Your Email',
+            'currentPage' => $this->currentPage,
+            'user' => $this->authService->user()
+        ], ['auth'], ['auth']);
+    }
+
+    /**
+     * Process email verification
+     */
+    public function verifyEmail(): void
+    {
+        $token = $_GET['token'] ?? '';
+
+        if (empty($token)) {
+            $this->setFlash('error', 'Invalid verification link');
+            $this->redirect('/login');
+            return;
+        }
+
+        $userId = $this->emailVerificationService->verify($token);
+
+        if ($userId !== null) {
+            $this->auditService->log($userId, 'email_verified', []);
+            $this->setFlash('success', 'Your email has been verified. You can now log in.');
+            $this->redirect('/login');
+        } else {
+            $this->setFlash('error', 'Invalid or expired verification link');
+            $this->redirect('/login');
+        }
+    }
+
+    /**
+     * Resend verification email
+     */
+    public function resendVerification(): void
+    {
+        $user = $this->authService->user();
+
+        // Also allow resending by email for non-logged-in users
+        $email = $_POST['email'] ?? '';
+
+        if ($user) {
+            if ($user['email_verified_at'] !== null) {
+                $this->setFlash('info', 'Your email is already verified');
+                $this->redirect('/dashboard');
+                return;
+            }
+            
+            $this->emailVerificationService->resendVerification($user['id']);
+            $this->setFlash('success', 'Verification email has been resent');
+            $this->redirect('/verify-email');
+        } elseif (!empty($email)) {
+            $targetUser = $this->userModel->findByEmail($email);
+            
+            if ($targetUser && $targetUser['email_verified_at'] === null) {
+                $this->emailVerificationService->resendVerification($targetUser['id']);
+            }
+            
+            // Always show success to prevent enumeration
+            $this->setFlash('success', 'If an account with that email exists and is not verified, a verification email has been sent.');
+            $this->redirect('/verify-email');
+        } else {
+            $this->setFlash('error', 'Please provide your email address');
+            $this->redirect('/verify-email');
         }
     }
 
