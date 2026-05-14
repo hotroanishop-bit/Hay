@@ -15,6 +15,17 @@
 
 $routes = [
     // =====================
+    // API Documentation (Public)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/docs',
+        'controller' => DocsController::class,
+        'action' => 'index',
+        'middleware' => []
+    ],
+
+    // =====================
     // Auth Routes (Public)
     // =====================
     [
