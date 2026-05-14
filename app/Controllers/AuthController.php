@@ -11,6 +11,7 @@ class AuthController extends BaseController
     private User $userModel;
     private PasswordResetService $passwordResetService;
     private EmailVerificationService $emailVerificationService;
+    private CaptchaService $captchaService;
 
     public function __construct()
     {
@@ -20,6 +21,7 @@ class AuthController extends BaseController
         $this->auditService = new AuditService();
         $this->passwordResetService = new PasswordResetService();
         $this->emailVerificationService = new EmailVerificationService();
+        $this->captchaService = new CaptchaService();
     }
 
     /**
@@ -33,11 +35,26 @@ class AuthController extends BaseController
             return;
         }
 
-        $this->currentPage = 'login';
-        $this->render('auth/login', [
+        $viewData = [
             'pageTitle' => 'Login',
-            'currentPage' => $this->currentPage
-        ], ['auth'], ['auth']);
+            'currentPage' => 'login',
+            'accountLocked' => false,
+            'showCaptcha' => false,
+            'captcha' => null,
+            'unlockTime' => null
+        ];
+
+        // Check for previous failed attempts (stored in session)
+        $failedAttempts = $_SESSION['login_failed_attempts'] ?? 0;
+        
+        // Show CAPTCHA after 3 failed attempts
+        if ($failedAttempts >= 3 && $this->captchaService->isEnabled()) {
+            $viewData['showCaptcha'] = true;
+            $viewData['captcha'] = $this->captchaService->generateCaptcha();
+        }
+
+        $this->currentPage = 'login';
+        $this->render('auth/login', $viewData, ['auth'], ['auth']);
     }
 
     /**
@@ -55,14 +72,43 @@ class AuthController extends BaseController
             return;
         }
 
+        // Check failed attempts from session
+        $failedAttempts = $_SESSION['login_failed_attempts'] ?? 0;
+
+        // Verify CAPTCHA if required
+        if ($failedAttempts >= 3 && $this->captchaService->isEnabled()) {
+            $captchaAnswer = $_POST['captcha_answer'] ?? '';
+            if (!$this->captchaService->verifyCaptcha($captchaAnswer)) {
+                $this->setFlash('error', 'Incorrect CAPTCHA answer. Please try again.');
+                $this->redirect('/login');
+                return;
+            }
+        }
+
+        // Check if user exists and account is locked
+        $user = $this->userModel->findByEmail($email);
+        if ($user && $this->authService->isAccountLocked($user)) {
+            $unlockTime = $this->authService->getUnlockTime($user);
+            $minutes = ceil($unlockTime / 60);
+            $this->setFlash('error', "Account is locked. Please try again in {$minutes} minute(s).");
+            $this->redirect('/login');
+            return;
+        }
+
         // Attempt login
         $result = $this->authService->attempt($email, $password);
 
         if (!$result) {
+            // Increment session-based failed attempts
+            $_SESSION['login_failed_attempts'] = ($failedAttempts ?? 0) + 1;
+            
             $this->setFlash('error', 'Invalid email or password');
             $this->redirect('/login');
             return;
         }
+
+        // Reset failed attempts on success
+        unset($_SESSION['login_failed_attempts']);
 
         // Check if 2FA is required
         if ($this->authService->isPending2FA()) {

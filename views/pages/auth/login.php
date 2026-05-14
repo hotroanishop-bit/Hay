@@ -16,6 +16,16 @@
             <p><?php echo __('auth.sign_in_continue', 'Sign in to your account to continue'); ?></p>
         </div>
 
+        <?php if (!empty($accountLocked)): ?>
+        <div class="auth-alert auth-alert-danger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <div>
+                <strong><?php echo __('auth.account_locked', 'Account Locked'); ?></strong>
+                <p><?php echo __('auth.account_locked_msg', 'Too many failed login attempts. Please try again in'); ?> <?= htmlspecialchars($unlockTime ?? '15 minutes') ?>.</p>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <form action="/login" method="POST" class="auth-form">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
 
@@ -42,6 +52,10 @@
                 </div>
             </div>
 
+            <?php if (!empty($showCaptcha) && !empty($captcha)): ?>
+            <?php include VIEWS_PATH . '/partials/captcha.php'; ?>
+            <?php endif; ?>
+
             <div class="form-group">
                 <label class="checkbox-wrapper">
                     <input type="checkbox" name="remember" class="checkbox-input">
@@ -50,7 +64,7 @@
                 </label>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-lg w-full" id="submitBtn">
+            <button type="submit" class="btn btn-primary btn-lg w-full" id="submitBtn" <?= !empty($accountLocked) ? 'disabled' : '' ?>>
                 <span class="btn-text"><?php echo __('auth.sign_in', 'Sign In'); ?></span>
                 <span class="btn-loader" style="display:none">
                     <span class="spinner"></span>
@@ -103,6 +117,37 @@
 .auth-header {
     text-align: center;
     margin-bottom: var(--space-8);
+}
+
+/* Auth Alert */
+.auth-alert {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-5);
+}
+
+.auth-alert-danger {
+    background: var(--color-error-light, rgba(220, 53, 69, 0.1));
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    color: var(--color-error, #dc3545);
+}
+
+.auth-alert svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.auth-alert strong {
+    display: block;
+    margin-bottom: var(--space-1);
+}
+
+.auth-alert p {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    opacity: 0.9;
 }
 
 .auth-header h1 {

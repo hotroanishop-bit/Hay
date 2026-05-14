@@ -8,11 +8,26 @@ class AuthService
 {
     private SessionService $session;
     private User $userModel;
+    private ?SessionManagementService $sessionManagement = null;
+
+    private const MAX_FAILED_ATTEMPTS = 5;
+    private const LOCKOUT_MINUTES = 15;
 
     public function __construct(SessionService $session, User $userModel)
     {
         $this->session = $session;
         $this->userModel = $userModel;
+    }
+
+    /**
+     * Get session management service (lazy load)
+     */
+    private function getSessionManagement(): SessionManagementService
+    {
+        if ($this->sessionManagement === null) {
+            $this->sessionManagement = new SessionManagementService();
+        }
+        return $this->sessionManagement;
     }
 
     /**
@@ -26,9 +41,21 @@ class AuthService
             return false;
         }
 
-        if (!$this->userModel->verifyPassword($password, $user['password_hash'])) {
+        // Check if account is locked
+        if ($this->isAccountLocked($user)) {
+            $this->logLoginAttempt($user['id'], false);
             return false;
         }
+
+        if (!$this->userModel->verifyPassword($password, $user['password_hash'])) {
+            // Increment failed attempts
+            $this->incrementFailedAttempts($user['id']);
+            $this->logLoginAttempt($user['id'], false);
+            return false;
+        }
+
+        // Reset failed attempts on successful login
+        $this->resetFailedAttempts($user['id']);
 
         // Check if 2FA is enabled - if so, don't fully log in yet
         if (!empty($user['two_factor_enabled'])) {
@@ -36,12 +63,122 @@ class AuthService
             return true;
         }
 
+        // Complete the login
+        $this->completeLogin($user);
+
+        return true;
+    }
+
+    /**
+     * Complete the login process after all verification
+     */
+    private function completeLogin(array $user): void
+    {
         // Regenerate session ID to prevent session fixation
         $this->session->regenerate();
         $this->session->set('user_id', $user['id']);
         $this->session->set('logged_in_at', time());
 
-        return true;
+        // Create a persistent session token for session management
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
+        
+        try {
+            $sessionToken = $this->getSessionManagement()->createSession($user['id'], $ip, $userAgent);
+            $this->session->set('session_token', $sessionToken);
+        } catch (Exception $e) {
+            // Session management is optional, continue without it
+        }
+
+        // Log successful login
+        $this->logLoginAttempt($user['id'], true);
+    }
+
+    /**
+     * Log a login attempt
+     */
+    private function logLoginAttempt(int $userId, bool $success): void
+    {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
+
+        try {
+            $this->getSessionManagement()->logLogin($userId, $ip, $userAgent, $success);
+        } catch (Exception $e) {
+            // Session management is optional, continue without logging
+        }
+    }
+
+    /**
+     * Check if an account is locked
+     */
+    public function isAccountLocked(array $user): bool
+    {
+        if (empty($user['locked_until'])) {
+            return false;
+        }
+
+        $lockedUntil = strtotime($user['locked_until']);
+        if ($lockedUntil > time()) {
+            return true;
+        }
+
+        // Lock has expired, reset it
+        $this->resetFailedAttempts($user['id']);
+        return false;
+    }
+
+    /**
+     * Get time remaining until account unlock
+     */
+    public function getUnlockTime(array $user): ?int
+    {
+        if (empty($user['locked_until'])) {
+            return null;
+        }
+
+        $lockedUntil = strtotime($user['locked_until']);
+        $remaining = $lockedUntil - time();
+
+        return $remaining > 0 ? $remaining : null;
+    }
+
+    /**
+     * Increment failed login attempts
+     */
+    private function incrementFailedAttempts(int $userId): void
+    {
+        $user = $this->userModel->find($userId);
+        $attempts = ($user['failed_login_attempts'] ?? 0) + 1;
+
+        $data = ['failed_login_attempts' => $attempts];
+
+        // Lock account after max attempts
+        if ($attempts >= self::MAX_FAILED_ATTEMPTS) {
+            $data['locked_until'] = date('Y-m-d H:i:s', strtotime('+' . self::LOCKOUT_MINUTES . ' minutes'));
+        }
+
+        $this->userModel->update($userId, $data);
+    }
+
+    /**
+     * Reset failed login attempts
+     */
+    private function resetFailedAttempts(int $userId): void
+    {
+        $this->userModel->update($userId, [
+            'failed_login_attempts' => 0,
+            'locked_until' => null
+        ]);
+    }
+
+    /**
+     * Get failed login attempts for a user
+     */
+    public function getFailedAttempts(string $email): int
+    {
+        $user = $this->userModel->findByEmail($email);
+        return $user['failed_login_attempts'] ?? 0;
     }
 
     /**
@@ -73,6 +210,21 @@ class AuthService
      */
     public function logout(): void
     {
+        // Terminate the session token if exists
+        $sessionToken = $this->session->get('session_token');
+        $userId = $this->session->get('user_id');
+        
+        if ($sessionToken && $userId) {
+            try {
+                $session = $this->getSessionManagement()->getSessionByToken($sessionToken);
+                if ($session) {
+                    $this->getSessionManagement()->terminateSession($session['id'], $userId);
+                }
+            } catch (Exception $e) {
+                // Continue with logout even if session termination fails
+            }
+        }
+
         $this->session->destroy();
     }
 
@@ -129,9 +281,7 @@ class AuthService
 
         // Complete the login
         $this->session->remove('pending_2fa_user_id');
-        $this->session->regenerate();
-        $this->session->set('user_id', $user['id']);
-        $this->session->set('logged_in_at', time());
+        $this->completeLogin($user);
 
         return true;
     }

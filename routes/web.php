@@ -1211,6 +1211,56 @@ $routes = [
         'action' => 'execute',
         'middleware' => [AuthMiddleware::class]
     ],
+
+    // =====================
+    // Security Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/security/login-history',
+        'controller' => SecurityController::class,
+        'action' => 'loginHistory',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/security/sessions',
+        'controller' => SecurityController::class,
+        'action' => 'sessions',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/security/sessions/{id}/terminate',
+        'controller' => SecurityController::class,
+        'action' => 'terminateSession',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/security/sessions/terminate-all',
+        'controller' => SecurityController::class,
+        'action' => 'terminateAllSessions',
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    // =====================
+    // Export Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/export/usage',
+        'controller' => ExportController::class,
+        'action' => 'usageLogs',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/export/transactions',
+        'controller' => ExportController::class,
+        'action' => 'transactions',
+        'middleware' => [AuthMiddleware::class]
+    ],
 ];
 
 return $routes;
