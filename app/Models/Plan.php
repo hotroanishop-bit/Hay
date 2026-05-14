@@ -14,6 +14,10 @@ class Plan extends BaseModel
         'rate_limit_per_minute',
         'daily_token_limit',
         'price_multiplier',
+        'token_quota',
+        'duration_days',
+        'is_free',
+        'description',
         'is_active',
         'created_at',
         'updated_at'
@@ -84,5 +88,57 @@ class Plan extends BaseModel
         $result = $stmt->fetch();
         
         return (int) $result['count'];
+    }
+
+    /**
+     * Get token quota for a plan
+     */
+    public function getTokenQuota(int $planId): int
+    {
+        $plan = $this->find($planId);
+        
+        if (!$plan) {
+            return 0;
+        }
+        
+        return (int) ($plan['token_quota'] ?? 0);
+    }
+
+    /**
+     * Parse and set token quota using token notation (e.g., 10k, 1M)
+     * Requires TokenHelper to be included
+     */
+    public function parseAndSetTokenQuota(int $planId, string $notation): bool
+    {
+        // Include TokenHelper if not already loaded
+        if (!function_exists('parseTokenNotation')) {
+            $helperPath = dirname(__DIR__) . '/Helpers/TokenHelper.php';
+            if (file_exists($helperPath)) {
+                require_once $helperPath;
+            }
+        }
+        
+        $tokens = function_exists('parseTokenNotation') 
+            ? parseTokenNotation($notation) 
+            : (int) $notation;
+        
+        $sql = "UPDATE {$this->table} SET token_quota = :tokens, updated_at = NOW() WHERE id = :id";
+        return $this->execute($sql, ['tokens' => $tokens, 'id' => $planId]);
+    }
+
+    /**
+     * Find all free plans
+     */
+    public function findFreePlans(): array
+    {
+        return $this->findAll(['is_free' => 1, 'is_active' => 1], 'name ASC');
+    }
+
+    /**
+     * Find all paid plans
+     */
+    public function findPaidPlans(): array
+    {
+        return $this->findAll(['is_free' => 0, 'is_active' => 1], 'price_monthly ASC');
     }
 }
