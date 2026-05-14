@@ -14,6 +14,9 @@ define('PUBLIC_PATH', __DIR__);
 // Start session
 session_start();
 
+// Load Translation Helper (must be loaded before autoloader uses it)
+require_once APP_PATH . '/Helpers/TranslationHelper.php';
+
 // Basic autoloading
 spl_autoload_register(function ($class) {
     $paths = [
@@ -247,6 +250,9 @@ class Router
 
 // Create router and process request
 $router = new Router($routes);
+
+// Initialize Translation Service
+TranslationService::getInstance()->initialize();
 
 // Check maintenance mode (skip for login/logout paths to allow admin access)
 $skipMaintenancePaths = ['/login', '/logout', '/forgot-password', '/reset-password'];

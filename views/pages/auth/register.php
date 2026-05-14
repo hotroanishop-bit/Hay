@@ -12,34 +12,34 @@
         </div>
         
         <div class="auth-header">
-            <h1>Create Account</h1>
-            <p>Get started with your free account today</p>
+            <h1><?php echo __('auth.create_account', 'Create Account'); ?></h1>
+            <p><?php echo __('auth.get_started', 'Get started with your free account today'); ?></p>
         </div>
 
         <form action="/register" method="POST" class="auth-form" id="registerForm">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
 
             <div class="form-group">
-                <label for="name" class="form-label">Full Name</label>
+                <label for="name" class="form-label"><?php echo __('auth.full_name', 'Full Name'); ?></label>
                 <div class="input-icon-wrapper">
                     <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    <input type="text" id="name" name="name" class="form-input form-input-icon" placeholder="Enter your full name" required autofocus>
+                    <input type="text" id="name" name="name" class="form-input form-input-icon" placeholder="<?php echo __('auth.enter_name', 'Enter your full name'); ?>" required autofocus>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="email" class="form-label">Email Address</label>
+                <label for="email" class="form-label"><?php echo __('auth.email_address', 'Email Address'); ?></label>
                 <div class="input-icon-wrapper">
                     <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
-                    <input type="email" id="email" name="email" class="form-input form-input-icon" placeholder="Enter your email" required>
+                    <input type="email" id="email" name="email" class="form-input form-input-icon" placeholder="<?php echo __('auth.enter_email', 'Enter your email'); ?>" required>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="password" class="form-label">Password</label>
+                <label for="password" class="form-label"><?php echo __('auth.password', 'Password'); ?></label>
                 <div class="input-icon-wrapper">
                     <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                    <input type="password" id="password" name="password" class="form-input form-input-icon" placeholder="At least 8 characters" required minlength="8">
+                    <input type="password" id="password" name="password" class="form-input form-input-icon" placeholder="<?php echo __('auth.at_least_chars', 'At least 8 characters'); ?>" required minlength="8">
                     <button type="button" class="password-toggle" onclick="togglePassword('password', this)" aria-label="Toggle password visibility">
                         <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         <svg class="eye-closed" style="display:none" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg>
@@ -52,38 +52,38 @@
                         <span class="strength-bar"></span>
                         <span class="strength-bar"></span>
                     </div>
-                    <span class="strength-text">Password strength</span>
+                    <span class="strength-text"><?php echo __('auth.password_strength', 'Password strength'); ?></span>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="password_confirm" class="form-label">Confirm Password</label>
+                <label for="password_confirm" class="form-label"><?php echo __('auth.confirm_password', 'Confirm Password'); ?></label>
                 <div class="input-icon-wrapper">
                     <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                    <input type="password" id="password_confirm" name="password_confirm" class="form-input form-input-icon" placeholder="Confirm your password" required>
+                    <input type="password" id="password_confirm" name="password_confirm" class="form-input form-input-icon" placeholder="<?php echo __('auth.confirm_your_password', 'Confirm your password'); ?>" required>
                 </div>
-                <p class="form-error" id="passwordMatchError" style="display:none">Passwords do not match</p>
+                <p class="form-error" id="passwordMatchError" style="display:none"><?php echo __('auth.passwords_not_match', 'Passwords do not match'); ?></p>
             </div>
 
             <div class="form-group">
                 <label class="checkbox-wrapper">
                     <input type="checkbox" name="terms" class="checkbox-input" required>
                     <span class="checkbox-custom"></span>
-                    <span class="checkbox-label">I agree to the <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a></span>
+                    <span class="checkbox-label"><?php echo __('auth.terms_agree', 'I agree to the'); ?> <a href="/terms" target="_blank"><?php echo __('auth.terms_of_service', 'Terms of Service'); ?></a> <?php echo __('auth.and', 'and'); ?> <a href="/privacy" target="_blank"><?php echo __('auth.privacy_policy', 'Privacy Policy'); ?></a></span>
                 </label>
             </div>
 
             <button type="submit" class="btn btn-primary btn-lg w-full" id="submitBtn">
-                <span class="btn-text">Create Account</span>
+                <span class="btn-text"><?php echo __('auth.create_account', 'Create Account'); ?></span>
                 <span class="btn-loader" style="display:none">
                     <span class="spinner"></span>
-                    Creating account...
+                    <?php echo __('auth.creating_account', 'Creating account...'); ?>
                 </span>
             </button>
         </form>
 
         <div class="auth-footer">
-            <p>Already have an account? <a href="/login">Sign in</a></p>
+            <p><?php echo __('auth.have_account', 'Already have an account?'); ?> <a href="/login"><?php echo __('auth.sign_in_here', 'Sign in'); ?></a></p>
         </div>
     </div>
 </div>

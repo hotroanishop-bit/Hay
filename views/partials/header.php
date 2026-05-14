@@ -14,6 +14,9 @@
     
     <div class="topbar-right">
         <?php if (isset($_SESSION['user'])): ?>
+            <!-- Language Switcher -->
+            <?php require VIEWS_PATH . '/partials/language-switcher.php'; ?>
+            
             <!-- Theme Toggle -->
             <?php require VIEWS_PATH . '/partials/theme-toggle.php'; ?>
             
@@ -101,6 +104,9 @@
                 </div>
             </div>
         <?php else: ?>
+            <!-- Language Switcher for unauthenticated users -->
+            <?php require VIEWS_PATH . '/partials/language-switcher.php'; ?>
+            
             <!-- Theme Toggle for unauthenticated users -->
             <?php require VIEWS_PATH . '/partials/theme-toggle.php'; ?>
             

@@ -12,29 +12,29 @@
         </div>
         
         <div class="auth-header">
-            <h1>Welcome Back</h1>
-            <p>Sign in to your account to continue</p>
+            <h1><?php echo __('auth.welcome_back', 'Welcome Back'); ?></h1>
+            <p><?php echo __('auth.sign_in_continue', 'Sign in to your account to continue'); ?></p>
         </div>
 
         <form action="/login" method="POST" class="auth-form">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
 
             <div class="form-group">
-                <label for="email" class="form-label">Email Address</label>
+                <label for="email" class="form-label"><?php echo __('auth.email_address', 'Email Address'); ?></label>
                 <div class="input-icon-wrapper">
                     <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
-                    <input type="email" id="email" name="email" class="form-input form-input-icon" placeholder="Enter your email" required autofocus>
+                    <input type="email" id="email" name="email" class="form-input form-input-icon" placeholder="<?php echo __('auth.enter_email', 'Enter your email'); ?>" required autofocus>
                 </div>
             </div>
 
             <div class="form-group">
                 <div class="label-row">
-                    <label for="password" class="form-label">Password</label>
-                    <a href="/forgot-password" class="forgot-link">Forgot password?</a>
+                    <label for="password" class="form-label"><?php echo __('auth.password', 'Password'); ?></label>
+                    <a href="/forgot-password" class="forgot-link"><?php echo __('auth.forgot_password', 'Forgot password?'); ?></a>
                 </div>
                 <div class="input-icon-wrapper">
                     <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                    <input type="password" id="password" name="password" class="form-input form-input-icon" placeholder="Enter your password" required>
+                    <input type="password" id="password" name="password" class="form-input form-input-icon" placeholder="<?php echo __('auth.enter_password', 'Enter your password'); ?>" required>
                     <button type="button" class="password-toggle" onclick="togglePassword('password', this)" aria-label="Toggle password visibility">
                         <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         <svg class="eye-closed" style="display:none" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg>
@@ -46,21 +46,21 @@
                 <label class="checkbox-wrapper">
                     <input type="checkbox" name="remember" class="checkbox-input">
                     <span class="checkbox-custom"></span>
-                    <span class="checkbox-label">Remember me for 30 days</span>
+                    <span class="checkbox-label"><?php echo __('auth.remember_me', 'Remember me for 30 days'); ?></span>
                 </label>
             </div>
 
             <button type="submit" class="btn btn-primary btn-lg w-full" id="submitBtn">
-                <span class="btn-text">Sign In</span>
+                <span class="btn-text"><?php echo __('auth.sign_in', 'Sign In'); ?></span>
                 <span class="btn-loader" style="display:none">
                     <span class="spinner"></span>
-                    Signing in...
+                    <?php echo __('auth.signing_in', 'Signing in...'); ?>
                 </span>
             </button>
         </form>
 
         <div class="auth-footer">
-            <p>Don't have an account? <a href="/register">Create one</a></p>
+            <p><?php echo __('auth.no_account', "Don't have an account?"); ?> <a href="/register"><?php echo __('auth.create_one', 'Create one'); ?></a></p>
         </div>
     </div>
 </div>
