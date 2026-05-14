@@ -1,7 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
-<?php require VIEWS_PATH . '/partials/head.php'; ?>
-<body>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#6366f1">
+    <title><?php echo $pageTitle ?? 'API Keys Dashboard'; ?></title>
+    
+    <!-- CSS Loading Order: variables -> themes -> components -> global -> layout -> page-specific -->
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/themes/light.css">
+    <link rel="stylesheet" href="/css/themes/dark.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    
+    <!-- Dynamic page-specific CSS -->
+    <?php if (!empty($pageCssFiles)): ?>
+        <?php foreach ($pageCssFiles as $cssFile): ?>
+            <link rel="stylesheet" href="/css/pages/<?php echo htmlspecialchars($cssFile); ?>.css">
+        <?php endforeach; ?>
+    <?php endif; ?>
+    
+    <!-- Preload critical fonts if any -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    
+    <script>
+    // Apply saved theme immediately to prevent flash
+    (function() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+    </script>
+</head>
+<body data-theme="light">
     <div class="app-container">
         <?php require VIEWS_PATH . '/partials/header.php'; ?>
         
@@ -18,8 +49,32 @@
                 ?>
             </main>
         </div>
+        
+        <!-- Bottom Navigation for Mobile -->
+        <?php if (isset($_SESSION['user'])): ?>
+            <?php require VIEWS_PATH . '/partials/bottom-nav.php'; ?>
+        <?php endif; ?>
+        
+        <!-- Bottom Sheet Menu -->
+        <?php if (isset($_SESSION['user'])): ?>
+            <?php require VIEWS_PATH . '/partials/bottom-sheet.php'; ?>
+        <?php endif; ?>
     </div>
     
     <?php require VIEWS_PATH . '/partials/footer.php'; ?>
+    
+    <!-- JavaScript Loading Order: theme-switcher (must be first) -> bottom-sheet -> notifications -> charts -> global -> page-specific -->
+    <script src="/js/theme-switcher.js"></script>
+    <script src="/js/bottom-sheet.js"></script>
+    <script src="/js/notifications.js"></script>
+    <script src="/js/charts.js"></script>
+    <script src="/js/global.js"></script>
+    
+    <!-- Dynamic page-specific JS -->
+    <?php if (!empty($pageJsFiles)): ?>
+        <?php foreach ($pageJsFiles as $jsFile): ?>
+            <script src="/js/pages/<?php echo htmlspecialchars($jsFile); ?>.js"></script>
+        <?php endforeach; ?>
+    <?php endif; ?>
 </body>
 </html>

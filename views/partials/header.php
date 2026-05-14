@@ -1,7 +1,11 @@
 <header class="topbar">
     <div class="topbar-left">
-        <button class="sidebar-toggle" id="sidebarToggle">
-            <span class="hamburger-icon"></span>
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
         </button>
         <a href="/" class="logo">
             <span class="logo-text">API Keys</span>
@@ -10,13 +14,20 @@
     
     <div class="topbar-right">
         <?php if (isset($_SESSION['user'])): ?>
+            <!-- Theme Toggle -->
+            <?php require VIEWS_PATH . '/partials/theme-toggle.php'; ?>
+            
+            <!-- Notification Bell -->
+            <?php require VIEWS_PATH . '/partials/notification-bell.php'; ?>
+            
+            <!-- User Info & Dropdown -->
             <div class="user-info">
                 <span class="user-name"><?php echo htmlspecialchars($_SESSION['user']['name'] ?? 'User'); ?></span>
                 <span class="user-balance">$<?php echo number_format($_SESSION['user']['balance'] ?? 0, 2); ?></span>
             </div>
             
             <div class="user-dropdown">
-                <button class="user-avatar-btn" id="userDropdownToggle" aria-label="User menu">
+                <button class="user-avatar-btn" id="userDropdownToggle" aria-label="User menu" aria-expanded="false">
                     <?php if (!empty($_SESSION['user']['avatar_url'])): ?>
                         <img src="<?php echo htmlspecialchars($_SESSION['user']['avatar_url']); ?>" 
                              alt="<?php echo htmlspecialchars($_SESSION['user']['name'] ?? 'User'); ?>" 
@@ -30,7 +41,7 @@
                         </span>
                     <?php endif; ?>
                 </button>
-                <div class="dropdown-menu" id="userDropdownMenu">
+                <div class="dropdown-menu" id="userDropdownMenu" aria-hidden="true">
                     <div class="dropdown-header">
                         <div class="dropdown-user-info">
                             <?php if (!empty($_SESSION['user']['avatar_url'])): ?>
@@ -62,6 +73,13 @@
                         </svg>
                         <span>Billing</span>
                     </a>
+                    <a href="/notifications" class="dropdown-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span>Notifications</span>
+                    </a>
                     <?php if (isset($_SESSION['user']['is_admin']) && $_SESSION['user']['is_admin']): ?>
                     <a href="/admin/settings" class="dropdown-item">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -83,6 +101,9 @@
                 </div>
             </div>
         <?php else: ?>
+            <!-- Theme Toggle for unauthenticated users -->
+            <?php require VIEWS_PATH . '/partials/theme-toggle.php'; ?>
+            
             <div class="auth-buttons">
                 <a href="/login" class="btn btn-outline btn-sm">Login</a>
                 <a href="/register" class="btn btn-primary btn-sm">Register</a>
@@ -90,205 +111,6 @@
         <?php endif; ?>
     </div>
 </header>
-
-<style>
-/* Header User Dropdown Styles */
-.topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.user-info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    margin-right: 0.5rem;
-}
-
-.user-name {
-    font-weight: 500;
-    font-size: 0.875rem;
-    color: var(--text-primary, #1a1a2e);
-}
-
-.user-balance {
-    font-size: 0.75rem;
-    color: var(--text-secondary, #6b7280);
-}
-
-.user-dropdown {
-    position: relative;
-}
-
-.user-avatar-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 2px solid var(--border-color, #e5e7eb);
-    background: var(--primary-color, #6366f1);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.user-avatar-btn:hover {
-    border-color: var(--primary-color, #6366f1);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.avatar-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.avatar-initials {
-    color: white;
-    font-weight: 600;
-    font-size: 1rem;
-}
-
-.dropdown-menu {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    min-width: 240px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-    border: 1px solid var(--border-color, #e5e7eb);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
-    z-index: 1000;
-}
-
-.dropdown-menu.show {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.dropdown-header {
-    padding: 1rem;
-}
-
-.dropdown-user-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.dropdown-avatar,
-.dropdown-avatar-initials {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.dropdown-avatar {
-    object-fit: cover;
-}
-
-.dropdown-avatar-initials {
-    background: var(--primary-color, #6366f1);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-}
-
-.dropdown-user-details {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.dropdown-user-name {
-    font-weight: 600;
-    font-size: 0.875rem;
-    color: var(--text-primary, #1a1a2e);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.dropdown-user-email {
-    font-size: 0.75rem;
-    color: var(--text-secondary, #6b7280);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.dropdown-divider {
-    height: 1px;
-    background: var(--border-color, #e5e7eb);
-    margin: 0;
-    border: none;
-}
-
-.dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    color: var(--text-primary, #1a1a2e);
-    text-decoration: none;
-    font-size: 0.875rem;
-    transition: background-color 0.15s;
-}
-
-.dropdown-item:hover {
-    background-color: var(--bg-hover, #f3f4f6);
-}
-
-.dropdown-item svg {
-    color: var(--text-secondary, #6b7280);
-    flex-shrink: 0;
-}
-
-.dropdown-item-danger {
-    color: #dc2626;
-}
-
-.dropdown-item-danger svg {
-    color: #dc2626;
-}
-
-.dropdown-item-danger:hover {
-    background-color: #fef2f2;
-}
-
-.auth-buttons {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.btn-outline {
-    background: transparent;
-    border: 1px solid var(--border-color, #e5e7eb);
-    color: var(--text-primary, #1a1a2e);
-}
-
-.btn-outline:hover {
-    background: var(--bg-hover, #f3f4f6);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .user-info {
-        display: none;
-    }
-}
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -298,13 +120,17 @@ document.addEventListener('DOMContentLoaded', function() {
     if (dropdownToggle && dropdownMenu) {
         dropdownToggle.addEventListener('click', function(e) {
             e.stopPropagation();
-            dropdownMenu.classList.toggle('show');
+            const isExpanded = dropdownMenu.classList.toggle('show');
+            dropdownToggle.setAttribute('aria-expanded', isExpanded);
+            dropdownMenu.setAttribute('aria-hidden', !isExpanded);
         });
         
         // Close dropdown when clicking outside
         document.addEventListener('click', function(e) {
             if (!dropdownToggle.contains(e.target) && !dropdownMenu.contains(e.target)) {
                 dropdownMenu.classList.remove('show');
+                dropdownToggle.setAttribute('aria-expanded', 'false');
+                dropdownMenu.setAttribute('aria-hidden', 'true');
             }
         });
         
@@ -312,7 +138,20 @@ document.addEventListener('DOMContentLoaded', function() {
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 dropdownMenu.classList.remove('show');
+                dropdownToggle.setAttribute('aria-expanded', 'false');
+                dropdownMenu.setAttribute('aria-hidden', 'true');
             }
+        });
+    }
+    
+    // Sidebar toggle
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    
+    if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('sidebar-open');
+            document.body.classList.toggle('sidebar-expanded');
         });
     }
 });

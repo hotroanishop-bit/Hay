@@ -1,4 +1,4 @@
-<aside class="sidebar" id="sidebar">
+<aside class="sidebar hide-mobile" id="sidebar">
     <nav class="sidebar-nav">
         <ul class="nav-menu">
             <!-- User Section -->
