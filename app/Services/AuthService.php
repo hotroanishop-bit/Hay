@@ -1,7 +1,7 @@
 <?php
 /**
  * Auth Service
- * Handles user authentication, registration, and session management
+ * Handles user authentication, registration, session management, and impersonation
  */
 
 class AuthService
@@ -256,6 +256,136 @@ class AuthService
     public function id(): ?int
     {
         return $this->session->get('user_id');
+    }
+
+    // =====================
+    // Impersonation Methods
+    // =====================
+
+    /**
+     * Start impersonating a user
+     * 
+     * @param int $adminId The admin user's ID
+     * @param int $targetUserId The user to impersonate
+     * @return bool Success status
+     */
+    public function impersonate(int $adminId, int $targetUserId): bool
+    {
+        // Verify admin exists and is an admin
+        $admin = $this->userModel->find($adminId);
+        if (!$admin || empty($admin['is_admin'])) {
+            return false;
+        }
+
+        // Verify target user exists
+        $targetUser = $this->userModel->find($targetUserId);
+        if (!$targetUser) {
+            return false;
+        }
+
+        // Cannot impersonate yourself
+        if ($adminId === $targetUserId) {
+            return false;
+        }
+
+        // Cannot impersonate another admin
+        if (!empty($targetUser['is_admin'])) {
+            return false;
+        }
+
+        // Store original admin info before switching
+        $this->session->set('impersonating', true);
+        $this->session->set('original_admin_id', $adminId);
+        $this->session->set('original_admin_name', $admin['name'] ?? $admin['email']);
+        $this->session->set('impersonation_started_at', time());
+
+        // Switch to target user
+        $this->session->set('user_id', $targetUserId);
+
+        return true;
+    }
+
+    /**
+     * Exit impersonation and return to admin session
+     * 
+     * @return bool Success status
+     */
+    public function exitImpersonation(): bool
+    {
+        if (!$this->isImpersonating()) {
+            return false;
+        }
+
+        // Get original admin ID
+        $originalAdminId = $this->session->get('original_admin_id');
+        if (!$originalAdminId) {
+            return false;
+        }
+
+        // Verify original admin still exists
+        $admin = $this->userModel->find($originalAdminId);
+        if (!$admin) {
+            return false;
+        }
+
+        // Clear impersonation data
+        $this->session->remove('impersonating');
+        $this->session->remove('original_admin_id');
+        $this->session->remove('original_admin_name');
+        $this->session->remove('impersonation_started_at');
+
+        // Restore admin session
+        $this->session->set('user_id', $originalAdminId);
+
+        return true;
+    }
+
+    /**
+     * Check if currently impersonating a user
+     * 
+     * @return bool
+     */
+    public function isImpersonating(): bool
+    {
+        return (bool) $this->session->get('impersonating', false);
+    }
+
+    /**
+     * Get the original admin user data if impersonating
+     * 
+     * @return array|null Admin user data or null if not impersonating
+     */
+    public function getOriginalAdmin(): ?array
+    {
+        if (!$this->isImpersonating()) {
+            return null;
+        }
+
+        $originalAdminId = $this->session->get('original_admin_id');
+        if (!$originalAdminId) {
+            return null;
+        }
+
+        return $this->userModel->find($originalAdminId);
+    }
+
+    /**
+     * Get impersonation info
+     * 
+     * @return array|null Impersonation details or null if not impersonating
+     */
+    public function getImpersonationInfo(): ?array
+    {
+        if (!$this->isImpersonating()) {
+            return null;
+        }
+
+        return [
+            'admin_id' => $this->session->get('original_admin_id'),
+            'admin_name' => $this->session->get('original_admin_name'),
+            'started_at' => $this->session->get('impersonation_started_at'),
+            'target_user' => $this->user()
+        ];
     }
 
     /**

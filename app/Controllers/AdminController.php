@@ -3735,4 +3735,285 @@ class AdminController extends BaseController
         $this->setFlash('success', 'Incident deleted');
         $this->redirect('/admin/incidents');
     }
+
+    // =====================
+    // Role Management
+    // =====================
+
+    /**
+     * List all admin roles
+     */
+    public function roles(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $permissionService = new PermissionService();
+
+        if (!$permissionService->canManageRoles($admin)) {
+            $this->setFlash('error', 'You do not have permission to manage roles.');
+            $this->redirect('/admin');
+            return;
+        }
+
+        $roleModel = new AdminRole();
+        $roles = $roleModel->getAll();
+        $userCounts = $roleModel->getUserCounts();
+
+        $this->currentPage = 'admin-roles';
+        $this->render('admin/roles', [
+            'pageTitle' => 'Admin - Roles',
+            'currentPage' => $this->currentPage,
+            'roles' => $roles,
+            'userCounts' => $userCounts
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Show create role form
+     */
+    public function createRole(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $permissionService = new PermissionService();
+
+        if (!$permissionService->canManageRoles($admin)) {
+            $this->setFlash('error', 'You do not have permission to manage roles.');
+            $this->redirect('/admin');
+            return;
+        }
+
+        $this->currentPage = 'admin-roles';
+        $this->render('admin/role_form', [
+            'pageTitle' => 'Admin - Create Role',
+            'currentPage' => $this->currentPage,
+            'role' => null,
+            'availablePermissions' => AdminRole::getAvailablePermissions(),
+            'isEdit' => false
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Store a new role
+     */
+    public function storeRole(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $permissionService = new PermissionService();
+
+        if (!$permissionService->canManageRoles($admin)) {
+            $this->setFlash('error', 'You do not have permission to manage roles.');
+            $this->redirect('/admin');
+            return;
+        }
+
+        $roleModel = new AdminRole();
+        
+        $name = trim($_POST['name'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $permissions = $_POST['permissions'] ?? [];
+
+        if (empty($name)) {
+            $this->setFlash('error', 'Role name is required.');
+            $this->redirect('/admin/roles/create');
+            return;
+        }
+
+        // Validate name format (lowercase, underscores only)
+        if (!preg_match('/^[a-z_]+$/', $name)) {
+            $this->setFlash('error', 'Role name must contain only lowercase letters and underscores.');
+            $this->redirect('/admin/roles/create');
+            return;
+        }
+
+        // Check if name already exists
+        $existing = $roleModel->getByName($name);
+        if ($existing) {
+            $this->setFlash('error', 'A role with this name already exists.');
+            $this->redirect('/admin/roles/create');
+            return;
+        }
+
+        // Filter permissions to only valid ones
+        $validPermissions = AdminRole::getAllPermissionKeys();
+        $permissions = array_intersect($permissions, $validPermissions);
+
+        $roleId = $roleModel->createRole([
+            'name' => $name,
+            'description' => $description,
+            'permissions' => $permissions,
+            'is_system' => 0
+        ]);
+
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'role_created',
+            'role',
+            $roleId,
+            null,
+            ['name' => $name, 'permissions_count' => count($permissions)],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Role created successfully.');
+        $this->redirect('/admin/roles');
+    }
+
+    /**
+     * Show edit role form
+     */
+    public function editRole(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $permissionService = new PermissionService();
+
+        if (!$permissionService->canManageRoles($admin)) {
+            $this->setFlash('error', 'You do not have permission to manage roles.');
+            $this->redirect('/admin');
+            return;
+        }
+
+        $roleModel = new AdminRole();
+        $role = $roleModel->find($id);
+
+        if (!$role) {
+            $this->setFlash('error', 'Role not found.');
+            $this->redirect('/admin/roles');
+            return;
+        }
+
+        $this->currentPage = 'admin-roles';
+        $this->render('admin/role_form', [
+            'pageTitle' => 'Admin - Edit Role',
+            'currentPage' => $this->currentPage,
+            'role' => $role,
+            'availablePermissions' => AdminRole::getAvailablePermissions(),
+            'isEdit' => true
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Update a role
+     */
+    public function updateRole(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $permissionService = new PermissionService();
+
+        if (!$permissionService->canManageRoles($admin)) {
+            $this->setFlash('error', 'You do not have permission to manage roles.');
+            $this->redirect('/admin');
+            return;
+        }
+
+        $roleModel = new AdminRole();
+        $role = $roleModel->find($id);
+
+        if (!$role) {
+            $this->setFlash('error', 'Role not found.');
+            $this->redirect('/admin/roles');
+            return;
+        }
+
+        $description = trim($_POST['description'] ?? '');
+        $permissions = $_POST['permissions'] ?? [];
+
+        // For system roles, don't allow changing the name
+        $name = $role['is_system'] ? $role['name'] : trim($_POST['name'] ?? $role['name']);
+
+        // Filter permissions to only valid ones
+        $validPermissions = AdminRole::getAllPermissionKeys();
+        $permissions = array_intersect($permissions, $validPermissions);
+
+        $oldPermissions = json_decode($role['permissions'] ?? '[]', true) ?: [];
+
+        $roleModel->updateRole($id, [
+            'name' => $name,
+            'description' => $description,
+            'permissions' => $permissions
+        ]);
+
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'role_updated',
+            'role',
+            $id,
+            ['permissions_count' => count($oldPermissions)],
+            ['name' => $name, 'permissions_count' => count($permissions)],
+            $this->getClientIP()
+        );
+
+        // Clear permission cache
+        $permissionService->clearCache();
+
+        $this->setFlash('success', 'Role updated successfully.');
+        $this->redirect('/admin/roles');
+    }
+
+    /**
+     * Delete a role
+     */
+    public function deleteRole(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $permissionService = new PermissionService();
+
+        if (!$permissionService->canManageRoles($admin)) {
+            $this->setFlash('error', 'You do not have permission to manage roles.');
+            $this->redirect('/admin');
+            return;
+        }
+
+        $roleModel = new AdminRole();
+        $role = $roleModel->find($id);
+
+        if (!$role) {
+            $this->setFlash('error', 'Role not found.');
+            $this->redirect('/admin/roles');
+            return;
+        }
+
+        if ($role['is_system']) {
+            $this->setFlash('error', 'System roles cannot be deleted.');
+            $this->redirect('/admin/roles');
+            return;
+        }
+
+        $roleModel->deleteRole($id);
+
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'role_deleted',
+            'role',
+            $id,
+            ['name' => $role['name']],
+            null,
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Role deleted successfully.');
+        $this->redirect('/admin/roles');
+    }
 }

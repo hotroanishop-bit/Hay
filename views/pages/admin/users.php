@@ -158,6 +158,12 @@
                                     <i class="icon-eye"></i>
                                 </a>
                                 <?php if (empty($user['is_admin'])): ?>
+                                    <form action="/admin/impersonate/<?= (int)$user['id'] ?>" method="POST" class="d-inline" onsubmit="return confirm('Login as this user?');">
+                                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                                        <button type="submit" class="btn btn-sm btn-ghost btn-info" title="Login as User">
+                                            <i class="icon-log-in"></i>
+                                        </button>
+                                    </form>
                                     <?php if (!empty($user['is_banned'])): ?>
                                     <form action="/admin/users/<?= (int)$user['id'] ?>/unban" method="POST" class="d-inline" onsubmit="return confirm('Unban this user?');">
                                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
@@ -525,6 +531,11 @@
 .btn-ghost.btn-primary:hover {
     background: rgba(79, 70, 229, 0.1);
     color: var(--color-primary);
+}
+
+.btn-ghost.btn-info:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--color-info);
 }
 
 .card-footer {

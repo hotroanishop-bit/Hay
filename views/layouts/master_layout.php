@@ -48,6 +48,7 @@
     </script>
 </head>
 <body data-theme="light">
+    <?php require VIEWS_PATH . '/partials/impersonation-banner.php'; ?>
     <div class="app-container">
         <?php require VIEWS_PATH . '/partials/header.php'; ?>
         

@@ -290,6 +290,28 @@
                     <span class="nav-text"><?php echo __('nav.changelogs', 'Changelogs'); ?></span>
                 </a>
             </li>
+            
+            <li class="nav-item">
+                <a href="/admin/roles" class="nav-link <?php echo ($currentPage === 'admin-roles') ? 'active' : ''; ?>">
+                    <span class="nav-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                    </span>
+                    <span class="nav-text"><?php echo __('nav.roles', 'Roles'); ?></span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="/admin/health" class="nav-link <?php echo ($currentPage === 'admin-health') ? 'active' : ''; ?>">
+                    <span class="nav-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                    </span>
+                    <span class="nav-text"><?php echo __('nav.health', 'System Health'); ?></span>
+                </a>
+            </li>
             <?php endif; ?>
         </ul>
     </nav>

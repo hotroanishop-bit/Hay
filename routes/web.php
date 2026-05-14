@@ -1364,6 +1364,88 @@ $routes = [
         'action' => 'deleteIncident',
         'middleware' => [AdminMiddleware::class]
     ],
+
+    // =====================
+    // Admin Role Management Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/roles',
+        'controller' => AdminController::class,
+        'action' => 'roles',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/roles/create',
+        'controller' => AdminController::class,
+        'action' => 'createRole',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/roles',
+        'controller' => AdminController::class,
+        'action' => 'storeRole',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/roles/{id}/edit',
+        'controller' => AdminController::class,
+        'action' => 'editRole',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/roles/{id}/update',
+        'controller' => AdminController::class,
+        'action' => 'updateRole',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/roles/{id}/delete',
+        'controller' => AdminController::class,
+        'action' => 'deleteRole',
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    // =====================
+    // Admin Impersonation Routes
+    // =====================
+    [
+        'method' => 'POST',
+        'path' => '/admin/impersonate/{id}',
+        'controller' => ImpersonateController::class,
+        'action' => 'impersonate',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/exit-impersonation',
+        'controller' => ImpersonateController::class,
+        'action' => 'exitImpersonation',
+        'middleware' => []
+    ],
+
+    // =====================
+    // Admin System Health Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/health',
+        'controller' => HealthController::class,
+        'action' => 'index',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/health/refresh',
+        'controller' => HealthController::class,
+        'action' => 'refresh',
+        'middleware' => [AdminMiddleware::class]
+    ],
 ];
 
 return $routes;
