@@ -1,0 +1,248 @@
+/**
+ * Bottom Navigation
+ * Fixed mobile navigation bar at bottom of viewport
+ */
+
+/* ================================
+   BOTTOM NAVIGATION BAR
+   ================================ */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--bottom-nav-height);
+    background-color: var(--surface-primary);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 var(--space-2);
+    padding-bottom: var(--safe-area-bottom);
+    z-index: var(--z-fixed);
+    transition: transform var(--transition-normal);
+}
+
+/* Add extra height for safe area */
+.bottom-nav {
+    height: calc(var(--bottom-nav-height) + var(--safe-area-bottom));
+}
+
+/* Hide bottom nav when keyboard is visible (mobile) */
+.bottom-nav.keyboard-hidden {
+    transform: translateY(100%);
+}
+
+/* ================================
+   NAVIGATION ITEMS
+   ================================ */
+.bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+    min-width: 64px;
+    max-width: 80px;
+    flex: 1;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    transition: color var(--transition-fast), background-color var(--transition-fast);
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.bottom-nav-item:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-tertiary);
+}
+
+/* Active state with top indicator */
+.bottom-nav-item.active {
+    color: var(--color-primary);
+}
+
+.bottom-nav-item.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 3px;
+    background-color: var(--color-primary);
+    border-radius: 0 0 var(--radius-full) var(--radius-full);
+}
+
+/* Alternative: Background indicator */
+.bottom-nav-item.active.indicator-bg {
+    background-color: var(--color-primary-light);
+}
+
+.bottom-nav-item.active.indicator-bg::before {
+    display: none;
+}
+
+/* ================================
+   ICON & LABEL
+   ================================ */
+.bottom-nav-icon {
+    font-size: 22px;
+    line-height: 1;
+    transition: transform var(--transition-fast);
+}
+
+.bottom-nav-item.active .bottom-nav-icon {
+    transform: scale(1.1);
+}
+
+.bottom-nav-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* Hide labels variant */
+.bottom-nav.icons-only .bottom-nav-label {
+    display: none;
+}
+
+.bottom-nav.icons-only .bottom-nav-icon {
+    font-size: 24px;
+}
+
+/* ================================
+   BADGE ON NAV ITEM
+   ================================ */
+.bottom-nav-item .nav-badge {
+    position: absolute;
+    top: 4px;
+    right: calc(50% - 20px);
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    font-size: 10px;
+    font-weight: var(--font-weight-bold);
+    line-height: 18px;
+    text-align: center;
+    color: var(--color-white);
+    background-color: var(--color-error);
+    border-radius: var(--radius-full);
+}
+
+.bottom-nav-item .nav-badge.badge-dot {
+    min-width: 8px;
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    top: 6px;
+    right: calc(50% - 16px);
+}
+
+/* ================================
+   CENTER FAB VARIANT
+   Special center button (e.g., for add action)
+   ================================ */
+.bottom-nav-center-fab {
+    width: 56px;
+    height: 56px;
+    margin-top: -24px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    box-shadow: var(--shadow-md);
+}
+
+.bottom-nav-center-fab:hover {
+    background-color: var(--color-primary-dark);
+    color: var(--color-white);
+}
+
+.bottom-nav-center-fab .bottom-nav-icon {
+    font-size: 24px;
+}
+
+.bottom-nav-center-fab .bottom-nav-label {
+    display: none;
+}
+
+.bottom-nav-center-fab::before {
+    display: none !important;
+}
+
+/* ================================
+   RESPONSIVE
+   Hide on desktop
+   ================================ */
+@media (min-width: 1024px) {
+    .bottom-nav {
+        display: none;
+    }
+    
+    /* Allow mobile-only class to force show */
+    .bottom-nav.force-show {
+        display: flex;
+    }
+}
+
+/* Adjust content for bottom nav on mobile */
+@media (max-width: 1023px) {
+    body.has-bottom-nav {
+        padding-bottom: calc(var(--bottom-nav-height) + var(--safe-area-bottom));
+    }
+    
+    .content-area.has-bottom-nav {
+        padding-bottom: calc(var(--space-6) + var(--bottom-nav-height) + var(--safe-area-bottom));
+    }
+}
+
+/* ================================
+   ANIMATION VARIANTS
+   ================================ */
+
+/* Slide up animation on page load */
+.bottom-nav.animate-in {
+    animation: bottomNavSlideIn 0.3s var(--ease-out) forwards;
+}
+
+@keyframes bottomNavSlideIn {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* Ripple effect on tap */
+.bottom-nav-item::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-md);
+    background-color: currentColor;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.bottom-nav-item:active::after {
+    opacity: 0.1;
+}
+
+/* ================================
+   DARK THEME ADJUSTMENTS
+   ================================ */
+[data-theme="dark"] .bottom-nav {
+    background-color: var(--surface-secondary);
+    border-top-color: var(--border-color);
+}
+
+[data-theme="dark"] .bottom-nav-center-fab {
+    box-shadow: var(--shadow-lg);
+}

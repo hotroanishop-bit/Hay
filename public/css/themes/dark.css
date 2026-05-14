@@ -1,0 +1,126 @@
+/**
+ * Dark Theme
+ * Override CSS variables for dark mode
+ */
+
+[data-theme="dark"] {
+    /* Color scheme hint for browser */
+    color-scheme: dark;
+    
+    /* Primary colors - slightly brighter for dark bg */
+    --color-primary: #60a5fa;
+    --color-primary-dark: #3b82f6;
+    --color-primary-light: #93c5fd;
+    
+    /* Secondary colors */
+    --color-secondary: #818cf8;
+    --color-secondary-dark: #6366f1;
+    --color-secondary-light: #a5b4fc;
+    
+    /* Semantic colors - adjusted for dark bg */
+    --color-success: #4ade80;
+    --color-success-light: rgba(34, 197, 94, 0.15);
+    --color-success-dark: #22c55e;
+    --color-warning: #fbbf24;
+    --color-warning-light: rgba(245, 158, 11, 0.15);
+    --color-warning-dark: #f59e0b;
+    --color-error: #f87171;
+    --color-error-light: rgba(239, 68, 68, 0.15);
+    --color-error-dark: #ef4444;
+    --color-info: #60a5fa;
+    --color-info-light: rgba(59, 130, 246, 0.15);
+    --color-info-dark: #3b82f6;
+    
+    /* Background colors */
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --bg-inverse: #f8fafc;
+    
+    /* Surface colors */
+    --surface-primary: #1e293b;
+    --surface-secondary: #334155;
+    --surface-elevated: #334155;
+    --surface-overlay: rgba(0, 0, 0, 0.7);
+    
+    /* Text colors */
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --text-inverse: #0f172a;
+    --text-link: #60a5fa;
+    --text-link-hover: #93c5fd;
+    
+    /* Border colors */
+    --border-color: #334155;
+    --border-light: #1e293b;
+    --border-dark: #475569;
+    --border-focus: #60a5fa;
+    
+    /* Gray scale - inverted for dark mode */
+    --color-gray-50: #0f172a;
+    --color-gray-100: #1e293b;
+    --color-gray-200: #334155;
+    --color-gray-300: #475569;
+    --color-gray-400: #64748b;
+    --color-gray-500: #94a3b8;
+    --color-gray-600: #cbd5e1;
+    --color-gray-700: #e2e8f0;
+    --color-gray-800: #f1f5f9;
+    --color-gray-900: #f8fafc;
+    --color-gray-950: #ffffff;
+    
+    /* Static colors remain the same */
+    --color-white: #ffffff;
+    --color-black: #000000;
+    
+    /* Shadows - darker and more pronounced for dark theme */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.3);
+    
+    /* Colored shadows for dark theme */
+    --shadow-primary: 0 4px 14px rgba(96, 165, 250, 0.2);
+    --shadow-success: 0 4px 14px rgba(74, 222, 128, 0.2);
+    --shadow-error: 0 4px 14px rgba(248, 113, 113, 0.2);
+    
+    /* Input focus ring */
+    --input-focus-ring-color: rgba(96, 165, 250, 0.3);
+    
+    /* Scrollbar colors */
+    --scrollbar-track: #1e293b;
+    --scrollbar-thumb: #475569;
+    --scrollbar-thumb-hover: #64748b;
+}
+
+/* Dark theme scrollbar styling */
+[data-theme="dark"] ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: var(--radius-full);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+}
+
+/* Dark theme specific adjustments */
+[data-theme="dark"] img {
+    opacity: 0.9;
+}
+
+[data-theme="dark"] ::selection {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+}
