@@ -98,7 +98,7 @@ class AdminController extends BaseController
     // =====================
 
     /**
-     * Admin Dashboard with stats and charts
+     * Admin Dashboard with comprehensive stats and charts
      */
     public function dashboard(): void
     {
@@ -106,24 +106,66 @@ class AdminController extends BaseController
             return;
         }
 
+        $admin = $this->authService->user();
+        $today = date('Y-m-d');
+        $weekAgo = date('Y-m-d', strtotime('-7 days'));
+        $monthAgo = date('Y-m-d', strtotime('-30 days'));
+
+        // === USER STATISTICS ===
+        
         // Get total users count
         $totalUsers = $this->userModel->count([]);
         
         // Get active users today (users with usage_logs today)
-        $today = date('Y-m-d');
         $sql = "SELECT COUNT(DISTINCT user_id) as active_count FROM usage_logs WHERE DATE(created_at) = :today";
         $activeResult = $this->usageLogModel->query($sql, ['today' => $today]);
         $activeUsersToday = (int) ($activeResult[0]['active_count'] ?? 0);
         
-        // Get total revenue (sum of approved deposits)
+        // Get new users this week
+        $sql = "SELECT COUNT(*) as total FROM users WHERE DATE(created_at) >= :week_ago";
+        $newUsersResult = $this->userModel->query($sql, ['week_ago' => $weekAgo]);
+        $newUsersThisWeek = (int) ($newUsersResult[0]['total'] ?? 0);
+        
+        // Get banned users count
+        $sql = "SELECT COUNT(*) as total FROM users WHERE is_banned = 1";
+        $bannedResult = $this->userModel->query($sql, []);
+        $bannedUsers = (int) ($bannedResult[0]['total'] ?? 0);
+
+        // === REVENUE STATISTICS ===
+        
+        // Get total revenue (all time - sum of approved deposits)
         $sql = "SELECT COALESCE(SUM(amount), 0) as total FROM deposits WHERE status = 'approved'";
         $revenueResult = $this->depositModel->query($sql, []);
         $totalRevenue = (float) ($revenueResult[0]['total'] ?? 0);
+        
+        // Get revenue this month
+        $sql = "SELECT COALESCE(SUM(amount), 0) as total FROM deposits WHERE status = 'approved' AND DATE(processed_at) >= :month_ago";
+        $monthRevenueResult = $this->depositModel->query($sql, ['month_ago' => $monthAgo]);
+        $revenueThisMonth = (float) ($monthRevenueResult[0]['total'] ?? 0);
+        
+        // Get revenue today
+        $sql = "SELECT COALESCE(SUM(amount), 0) as total FROM deposits WHERE status = 'approved' AND DATE(processed_at) = :today";
+        $todayRevenueResult = $this->depositModel->query($sql, ['today' => $today]);
+        $revenueToday = (float) ($todayRevenueResult[0]['total'] ?? 0);
+
+        // === API STATISTICS ===
         
         // Get total API calls today
         $sql = "SELECT COUNT(*) as total FROM usage_logs WHERE DATE(created_at) = :today";
         $apiResult = $this->usageLogModel->query($sql, ['today' => $today]);
         $apiCallsToday = (int) ($apiResult[0]['total'] ?? 0);
+        
+        // Get total API calls this week
+        $sql = "SELECT COUNT(*) as total FROM usage_logs WHERE DATE(created_at) >= :week_ago";
+        $apiWeekResult = $this->usageLogModel->query($sql, ['week_ago' => $weekAgo]);
+        $apiCallsThisWeek = (int) ($apiWeekResult[0]['total'] ?? 0);
+        
+        // Get tokens used today
+        $sql = "SELECT COALESCE(SUM(tokens_used), 0) as total FROM usage_logs WHERE DATE(created_at) = :today";
+        $tokensResult = $this->usageLogModel->query($sql, ['today' => $today]);
+        $tokensUsedToday = (int) ($tokensResult[0]['total'] ?? 0);
+
+        // === PENDING ITEMS ===
         
         // Get pending deposits count
         $sql = "SELECT COUNT(*) as total FROM deposits WHERE status = 'pending'";
@@ -134,48 +176,102 @@ class AdminController extends BaseController
         $sql = "SELECT COUNT(*) as total FROM tickets WHERE status = 'open'";
         $pendingTicketsResult = $this->ticketModel->query($sql, []);
         $pendingTickets = (int) ($pendingTicketsResult[0]['total'] ?? 0);
+
+        // === TOP USERS BY TOKEN USAGE (this month) ===
+        $sql = "SELECT u.id, u.name, u.email, u.last_login_at,
+                       COALESCE(SUM(ul.tokens_used), 0) as tokens_used,
+                       COALESCE(SUM(ul.cost), 0) as cost
+                FROM users u
+                LEFT JOIN usage_logs ul ON u.id = ul.user_id AND DATE(ul.created_at) >= :month_ago
+                GROUP BY u.id, u.name, u.email, u.last_login_at
+                HAVING tokens_used > 0
+                ORDER BY tokens_used DESC
+                LIMIT 10";
+        $topUsers = $this->userModel->query($sql, ['month_ago' => $monthAgo]);
+
+        // === MODEL USAGE BREAKDOWN ===
+        $sql = "SELECT model, COUNT(*) as call_count, COALESCE(SUM(tokens_used), 0) as total_tokens
+                FROM usage_logs
+                WHERE DATE(created_at) >= :month_ago
+                GROUP BY model
+                ORDER BY call_count DESC
+                LIMIT 8";
+        $modelUsage = $this->usageLogModel->query($sql, ['month_ago' => $monthAgo]);
+
+        // === CHARTS DATA ===
         
-        // Get revenue last 7 days (for chart)
-        $revenueLast7Days = [];
-        for ($i = 6; $i >= 0; $i--) {
+        // Revenue last 30 days (for line chart)
+        $revenueLast30Days = [];
+        for ($i = 29; $i >= 0; $i--) {
             $date = date('Y-m-d', strtotime("-{$i} days"));
             $sql = "SELECT COALESCE(SUM(amount), 0) as total FROM deposits WHERE status = 'approved' AND DATE(processed_at) = :date";
             $result = $this->depositModel->query($sql, ['date' => $date]);
-            $revenueLast7Days[] = [
+            $revenueLast30Days[] = [
                 'date' => $date,
                 'label' => date('M d', strtotime($date)),
-                'amount' => (float) ($result[0]['total'] ?? 0)
+                'value' => (float) ($result[0]['total'] ?? 0)
             ];
         }
         
-        // Get signups last 7 days (for chart)
-        $signupsLast7Days = [];
-        for ($i = 6; $i >= 0; $i--) {
+        // Signups last 30 days (for bar chart)
+        $signupsLast30Days = [];
+        for ($i = 29; $i >= 0; $i--) {
             $date = date('Y-m-d', strtotime("-{$i} days"));
             $sql = "SELECT COUNT(*) as total FROM users WHERE DATE(created_at) = :date";
             $result = $this->userModel->query($sql, ['date' => $date]);
-            $signupsLast7Days[] = [
+            $signupsLast30Days[] = [
                 'date' => $date,
                 'label' => date('M d', strtotime($date)),
-                'count' => (int) ($result[0]['total'] ?? 0)
+                'value' => (int) ($result[0]['total'] ?? 0)
             ];
         }
         
-        // Get recent activity (last 10 audit logs)
+        // API calls last 7 days (for bar chart)
+        $apiCallsLast7Days = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = date('Y-m-d', strtotime("-{$i} days"));
+            $sql = "SELECT COUNT(*) as total FROM usage_logs WHERE DATE(created_at) = :date";
+            $result = $this->usageLogModel->query($sql, ['date' => $date]);
+            $apiCallsLast7Days[] = [
+                'date' => $date,
+                'label' => date('D', strtotime($date)),
+                'value' => (int) ($result[0]['total'] ?? 0)
+            ];
+        }
+
+        // === RECENT ACTIVITY (last 10 audit logs) ===
         $recentActivity = $this->auditLogModel->getRecent(10);
 
         $this->currentPage = 'admin-dashboard';
         $this->render('admin/dashboard', [
             'pageTitle' => 'Admin Dashboard',
             'currentPage' => $this->currentPage,
+            'adminName' => $admin['name'] ?? 'Admin',
+            // User stats
             'totalUsers' => $totalUsers,
             'activeUsersToday' => $activeUsersToday,
+            'newUsersThisWeek' => $newUsersThisWeek,
+            'bannedUsers' => $bannedUsers,
+            // Revenue stats
             'totalRevenue' => $totalRevenue,
+            'revenueThisMonth' => $revenueThisMonth,
+            'revenueToday' => $revenueToday,
+            // API stats
             'apiCallsToday' => $apiCallsToday,
+            'apiCallsThisWeek' => $apiCallsThisWeek,
+            'tokensUsedToday' => $tokensUsedToday,
+            // Pending items
             'pendingDeposits' => $pendingDeposits,
             'pendingTickets' => $pendingTickets,
-            'revenueLast7Days' => $revenueLast7Days,
-            'signupsLast7Days' => $signupsLast7Days,
+            // Top users
+            'topUsers' => $topUsers,
+            // Model usage
+            'modelUsage' => $modelUsage,
+            // Chart data
+            'revenueLast30Days' => $revenueLast30Days,
+            'signupsLast30Days' => $signupsLast30Days,
+            'apiCallsLast7Days' => $apiCallsLast7Days,
+            // Recent activity
             'recentActivity' => $recentActivity
         ], ['admin_dashboard'], ['admin_dashboard']);
     }
