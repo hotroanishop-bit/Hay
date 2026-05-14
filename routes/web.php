@@ -265,6 +265,144 @@ $routes = [
         'action' => 'updateSettings',
         'middleware' => [AdminMiddleware::class]
     ],
+
+    // =====================
+    // Admin Plans Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/plans',
+        'controller' => AdminController::class,
+        'action' => 'plans',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/plans/create',
+        'controller' => AdminController::class,
+        'action' => 'createPlan',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/plans',
+        'controller' => AdminController::class,
+        'action' => 'storePlan',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/plans/{id}/edit',
+        'controller' => AdminController::class,
+        'action' => 'editPlan',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/plans/{id}/update',
+        'controller' => AdminController::class,
+        'action' => 'updatePlan',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/plans/{id}/delete',
+        'controller' => AdminController::class,
+        'action' => 'deletePlan',
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    // =====================
+    // Admin Providers Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/providers',
+        'controller' => AdminController::class,
+        'action' => 'providers',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/providers/create',
+        'controller' => AdminController::class,
+        'action' => 'createProvider',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/providers',
+        'controller' => AdminController::class,
+        'action' => 'storeProvider',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/providers/{id}/edit',
+        'controller' => AdminController::class,
+        'action' => 'editProvider',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/providers/{id}/update',
+        'controller' => AdminController::class,
+        'action' => 'updateProvider',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/providers/{id}/delete',
+        'controller' => AdminController::class,
+        'action' => 'deleteProvider',
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    // =====================
+    // Admin Model Pricing Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/model-pricing',
+        'controller' => AdminController::class,
+        'action' => 'modelPricing',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/model-pricing/create',
+        'controller' => AdminController::class,
+        'action' => 'createModelPricing',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/model-pricing',
+        'controller' => AdminController::class,
+        'action' => 'storeModelPricing',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/model-pricing/{id}/edit',
+        'controller' => AdminController::class,
+        'action' => 'editModelPricing',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/model-pricing/{id}/update',
+        'controller' => AdminController::class,
+        'action' => 'updateModelPricing',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/model-pricing/{id}/delete',
+        'controller' => AdminController::class,
+        'action' => 'deleteModelPricing',
+        'middleware' => [AdminMiddleware::class]
+    ],
 ];
 
 return $routes;

@@ -1,0 +1,142 @@
+/**
+ * Admin Providers Page Styles
+ * Styles for providers, plans, and model pricing management
+ */
+
+/* Page Header Actions */
+.page-header-actions {
+    display: flex;
+    gap: var(--spacing-3);
+    align-items: center;
+}
+
+/* Code Styling for URLs and API Keys */
+.url-code {
+    background-color: var(--color-gray-100);
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    word-break: break-all;
+    max-width: 250px;
+    display: inline-block;
+}
+
+.api-key-masked {
+    background-color: var(--color-gray-100);
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-family: monospace;
+    letter-spacing: 0.5px;
+}
+
+/* Input Group for Price Fields */
+.input-group {
+    display: flex;
+    align-items: stretch;
+}
+
+.input-group-text {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-2) var(--spacing-3);
+    background-color: var(--color-gray-100);
+    border: 1px solid var(--color-gray-300);
+    border-right: none;
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+    color: var(--color-gray-600);
+    font-size: var(--font-size-sm);
+}
+
+.input-group .form-control {
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+/* Text Danger for Required Fields */
+.text-danger {
+    color: var(--color-danger);
+}
+
+/* Select Dropdown Styling */
+select.form-control {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+/* Form Check Improvements */
+.form-check {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-2);
+}
+
+.form-check-input {
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+
+.form-check .form-text {
+    display: block;
+    margin-top: var(--spacing-1);
+}
+
+/* Model Name Code Styling */
+table code {
+    background-color: var(--color-gray-100);
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+}
+
+/* Stats for Admin Pages */
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-4);
+    margin-bottom: var(--spacing-6);
+}
+
+/* Provider Card Status Indicator */
+.provider-status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: var(--spacing-2);
+}
+
+.provider-status-indicator.active {
+    background-color: var(--color-success);
+}
+
+.provider-status-indicator.inactive {
+    background-color: var(--color-danger);
+}
+
+/* Responsive Table Adjustments */
+@media (max-width: 992px) {
+    .url-code {
+        max-width: 180px;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header-actions {
+        margin-top: var(--spacing-3);
+    }
+    
+    .url-code {
+        max-width: 150px;
+        font-size: var(--font-size-xs);
+    }
+    
+    .admin-table th,
+    .admin-table td {
+        padding: var(--spacing-2);
+        font-size: var(--font-size-sm);
+    }
+}
