@@ -1,0 +1,112 @@
+/**
+ * Billing Page Styles
+ * Styles for balance display, payment forms, transaction history
+ */
+
+/* Input Group */
+.input-group {
+    display: flex;
+    align-items: stretch;
+}
+
+.input-group .form-control {
+    flex: 1;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.input-group-text {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-gray-600);
+    background-color: var(--color-gray-100);
+    border: 1px solid var(--color-gray-300);
+    border-right: none;
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+/* Amount Button Group */
+.btn-group-amounts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-2);
+}
+
+.btn-group-amounts .btn {
+    flex: 1;
+    min-width: 60px;
+}
+
+/* Outline Secondary Button */
+.btn-outline-secondary {
+    background-color: transparent;
+    color: var(--color-gray-700);
+    border: 1px solid var(--color-gray-300);
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--color-gray-100);
+    border-color: var(--color-gray-400);
+}
+
+.btn-outline-secondary.active,
+.btn-outline-secondary:active {
+    background-color: var(--color-gray-200);
+    border-color: var(--color-gray-400);
+}
+
+/* Block Button */
+.btn-block {
+    display: block;
+    width: 100%;
+}
+
+/* Row Layout for Billing */
+.billing-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--spacing-6);
+}
+
+/* Card margin utility */
+.card.mt-4 {
+    margin-top: var(--spacing-4);
+}
+
+/* Transaction Type Colors */
+.transaction-credit {
+    color: var(--color-success);
+}
+
+.transaction-debit {
+    color: var(--color-error);
+}
+
+/* Responsive adjustments for billing page */
+@media (max-width: 992px) {
+    .billing-row {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Reorder columns on mobile - payment form first */
+    .billing-row > .col-md-8 {
+        order: 2;
+    }
+    
+    .billing-row > .col-md-4 {
+        order: 1;
+    }
+}
+
+@media (max-width: 576px) {
+    .btn-group-amounts {
+        flex-direction: column;
+    }
+    
+    .btn-group-amounts .btn {
+        width: 100%;
+    }
+}

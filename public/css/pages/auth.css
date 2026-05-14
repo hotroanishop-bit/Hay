@@ -1,0 +1,179 @@
+/**
+ * Auth Page Styles
+ * Styles for login, register, and 2FA pages
+ */
+
+/* Auth Container - Centers content on page */
+.auth-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - var(--topbar-height));
+    padding: var(--spacing-6);
+    background-color: var(--color-gray-50);
+}
+
+/* Auth Card - Main form container */
+.auth-card {
+    width: 100%;
+    max-width: 420px;
+    background-color: var(--color-white);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    padding: var(--spacing-8);
+}
+
+/* Auth Header */
+.auth-header {
+    text-align: center;
+    margin-bottom: var(--spacing-8);
+}
+
+.auth-header h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gray-900);
+    margin: 0 0 var(--spacing-2) 0;
+}
+
+.auth-header p {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-500);
+    margin: 0;
+}
+
+/* Auth Form */
+.auth-form .form-group {
+    margin-bottom: var(--spacing-5);
+}
+
+.auth-form .form-group label {
+    display: block;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-gray-700);
+    margin-bottom: var(--spacing-2);
+}
+
+.auth-form .form-control {
+    display: block;
+    width: 100%;
+    padding: var(--spacing-3) var(--spacing-4);
+    font-size: var(--font-size-base);
+    color: var(--color-gray-900);
+    background-color: var(--color-white);
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius-md);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.auth-form .form-control:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.auth-form .form-control::placeholder {
+    color: var(--color-gray-400);
+}
+
+/* Large input variant for verification codes */
+.auth-form .form-control-lg {
+    font-size: var(--font-size-2xl);
+    padding: var(--spacing-4);
+    letter-spacing: 0.5em;
+}
+
+.auth-form .form-control-lg.text-center {
+    text-align: center;
+}
+
+/* Form text/help */
+.auth-form .form-text {
+    display: block;
+    margin-top: var(--spacing-2);
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-500);
+}
+
+/* Form check (checkbox/radio) in auth context */
+.auth-form .form-check {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-2);
+}
+
+.auth-form .form-check-input {
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    cursor: pointer;
+    accent-color: var(--color-primary);
+}
+
+.auth-form .form-check-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    cursor: pointer;
+}
+
+.auth-form .form-check-label a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.auth-form .form-check-label a:hover {
+    text-decoration: underline;
+}
+
+/* Block button */
+.auth-form .btn-block {
+    display: block;
+    width: 100%;
+    padding: var(--spacing-3) var(--spacing-4);
+    font-size: var(--font-size-base);
+    margin-top: var(--spacing-6);
+}
+
+/* Auth Footer */
+.auth-footer {
+    margin-top: var(--spacing-6);
+    padding-top: var(--spacing-6);
+    border-top: 1px solid var(--color-gray-200);
+    text-align: center;
+}
+
+.auth-footer p {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-500);
+    margin: 0 0 var(--spacing-2) 0;
+}
+
+.auth-footer p:last-child {
+    margin-bottom: 0;
+}
+
+.auth-footer a {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: var(--font-weight-medium);
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .auth-container {
+        padding: var(--spacing-4);
+    }
+
+    .auth-card {
+        padding: var(--spacing-6);
+    }
+
+    .auth-header h1 {
+        font-size: var(--font-size-xl);
+    }
+}

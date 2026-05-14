@@ -1,0 +1,152 @@
+/**
+ * Analytics Page Styles
+ * Styles for charts, stat cards, data tables, and filters
+ */
+
+/* Page Header with Actions */
+.page-header-content {
+    flex: 1;
+}
+
+.page-header-content h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gray-900);
+    margin: 0 0 var(--spacing-1) 0;
+}
+
+.page-header-content p {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-500);
+    margin: 0;
+}
+
+.page-header-actions {
+    display: flex;
+    gap: var(--spacing-3);
+    align-items: center;
+}
+
+/* Filters Card */
+.filters-card {
+    margin-bottom: var(--spacing-6);
+}
+
+.form-inline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--spacing-4);
+}
+
+.form-inline .form-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    margin-bottom: 0;
+}
+
+.form-inline label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-gray-700);
+    white-space: nowrap;
+}
+
+.mr-2 {
+    margin-right: var(--spacing-2);
+}
+
+.mr-3 {
+    margin-right: var(--spacing-3);
+}
+
+/* Chart Container */
+.chart-container {
+    position: relative;
+    min-height: 300px;
+    width: 100%;
+}
+
+.chart-container .chart-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    background-color: var(--color-gray-50);
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--color-gray-300);
+}
+
+/* Canvas placeholder for charts */
+.chart-container canvas {
+    max-width: 100%;
+}
+
+/* Table Responsive */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Margin utilities */
+.mt-4 {
+    margin-top: var(--spacing-4);
+}
+
+.mb-4 {
+    margin-bottom: var(--spacing-4);
+}
+
+/* Analytics specific row layout */
+.analytics-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--spacing-6);
+    margin-bottom: var(--spacing-6);
+}
+
+/* Row utilities for analytics */
+.row.mt-4 {
+    margin-top: var(--spacing-6);
+}
+
+/* Date input styling */
+input[type="date"].form-control {
+    min-width: 150px;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .analytics-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-inline {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .form-inline .form-group {
+        width: 100%;
+    }
+    
+    .form-inline button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .page-header-actions {
+        margin-top: var(--spacing-4);
+    }
+    
+    .chart-container {
+        min-height: 250px;
+    }
+}

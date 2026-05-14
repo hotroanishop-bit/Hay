@@ -1,0 +1,160 @@
+/**
+ * Admin Page Styles
+ * Styles for admin tables, user management, settings forms
+ */
+
+/* Card Header with Actions */
+.card-actions {
+    display: flex;
+    gap: var(--spacing-3);
+    align-items: center;
+}
+
+/* Small Form Control */
+.form-control-sm {
+    padding: var(--spacing-1) var(--spacing-2);
+    font-size: var(--font-size-sm);
+}
+
+/* User Search Input */
+#user-search {
+    min-width: 200px;
+}
+
+/* Button Group */
+.btn-group {
+    display: inline-flex;
+    gap: var(--spacing-1);
+}
+
+/* Inline Display */
+.d-inline {
+    display: inline;
+}
+
+/* Table Hover */
+.table-hover tbody tr:hover {
+    background-color: var(--color-gray-50);
+}
+
+/* Pagination */
+.pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--spacing-6);
+}
+
+.pagination {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: var(--spacing-1);
+}
+
+.page-item {
+    display: inline-block;
+}
+
+.page-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 var(--spacing-3);
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-700);
+    background-color: var(--color-white);
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+}
+
+.page-link:hover {
+    background-color: var(--color-gray-100);
+    border-color: var(--color-gray-400);
+}
+
+.page-item.active .page-link {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-white);
+}
+
+.page-item.disabled .page-link {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Settings Form Actions */
+.form-actions {
+    display: flex;
+    gap: var(--spacing-3);
+    margin-top: var(--spacing-6);
+    padding-top: var(--spacing-6);
+    border-top: 1px solid var(--color-gray-200);
+}
+
+/* Card Margin Utility */
+.mb-4 {
+    margin-bottom: var(--spacing-4);
+}
+
+/* Form Text */
+.form-text {
+    display: block;
+    margin-top: var(--spacing-1);
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-500);
+}
+
+/* Warning Button */
+.btn-warning {
+    background-color: var(--color-warning);
+    color: var(--color-white);
+    border-color: var(--color-warning);
+}
+
+.btn-warning:hover:not(:disabled) {
+    background-color: #d97706;
+    border-color: #d97706;
+}
+
+/* Admin specific table styles */
+.admin-table th {
+    white-space: nowrap;
+}
+
+.admin-table td {
+    vertical-align: middle;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .card-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    #user-search {
+        width: 100%;
+        min-width: unset;
+    }
+}
+
+@media (max-width: 768px) {
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+    }
+    
+    .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}

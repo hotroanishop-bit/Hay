@@ -1,0 +1,182 @@
+/**
+ * Keys Page Styles
+ * Styles for API keys table, key creation form, key display
+ */
+
+/* API Key Display */
+.api-key-display {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    margin-top: var(--spacing-3);
+    padding: var(--spacing-3);
+    background-color: var(--color-gray-100);
+    border-radius: var(--radius-md);
+}
+
+.api-key-display code {
+    flex: 1;
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-sm);
+    word-break: break-all;
+    color: var(--color-gray-900);
+}
+
+/* Key Preview */
+.key-preview {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-600);
+    background-color: var(--color-gray-100);
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-sm);
+}
+
+/* Empty State */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-12) var(--spacing-6);
+    text-align: center;
+}
+
+.empty-state-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    margin-bottom: var(--spacing-6);
+    background-color: var(--color-gray-100);
+    border-radius: var(--radius-full);
+    color: var(--color-gray-400);
+    font-size: var(--font-size-3xl);
+}
+
+.empty-state h3 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-900);
+    margin: 0 0 var(--spacing-2) 0;
+}
+
+.empty-state p {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-500);
+    margin: 0 0 var(--spacing-6) 0;
+    max-width: 300px;
+}
+
+/* Alert Dismissible */
+.alert-dismissible {
+    position: relative;
+    padding-right: var(--spacing-10);
+}
+
+.alert-dismissible .alert-close {
+    position: absolute;
+    top: var(--spacing-3);
+    right: var(--spacing-3);
+}
+
+.alert-dismissible strong {
+    display: block;
+    margin-bottom: var(--spacing-2);
+}
+
+.alert-dismissible p {
+    margin-bottom: var(--spacing-2);
+}
+
+/* Keys table specific styles */
+.keys-table .btn-group {
+    flex-wrap: nowrap;
+}
+
+/* Badge in table cells */
+.table .badge {
+    white-space: nowrap;
+}
+
+/* Usage display */
+.usage-display {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-1);
+}
+
+.usage-display small {
+    font-size: var(--font-size-xs);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .api-key-display {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .api-key-display code {
+        text-align: center;
+        padding: var(--spacing-2) 0;
+    }
+    
+    .api-key-display .btn {
+        width: 100%;
+    }
+    
+    .empty-state {
+        padding: var(--spacing-8) var(--spacing-4);
+    }
+    
+    .empty-state-icon {
+        width: 64px;
+        height: 64px;
+        font-size: var(--font-size-2xl);
+    }
+}
+
+/* Key creation form */
+.key-form .form-group {
+    margin-bottom: var(--spacing-5);
+}
+
+/* Provider select styling */
+.provider-select {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: var(--spacing-3);
+}
+
+.provider-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-4);
+    border: 2px solid var(--color-gray-200);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.provider-option:hover {
+    border-color: var(--color-primary-light);
+    background-color: var(--color-gray-50);
+}
+
+.provider-option.selected {
+    border-color: var(--color-primary);
+    background-color: rgba(79, 70, 229, 0.05);
+}
+
+.provider-option input {
+    display: none;
+}
+
+.provider-option span {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-gray-700);
+}
