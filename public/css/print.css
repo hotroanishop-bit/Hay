@@ -1,0 +1,243 @@
+/**
+ * Print Stylesheet
+ * Optimized styles for printing invoices and receipts
+ */
+
+/* Base print styles */
+@media print {
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    body {
+        font-size: 12pt;
+        line-height: 1.5;
+        color: #000 !important;
+        background: #fff !important;
+        margin: 0;
+        padding: 0;
+    }
+    
+    /* Hide non-print elements */
+    .no-print,
+    .print-actions,
+    nav,
+    header,
+    footer,
+    .sidebar,
+    .bottom-nav,
+    .bottom-sheet,
+    button:not(.print-only) {
+        display: none !important;
+    }
+    
+    /* Page settings */
+    @page {
+        size: A4;
+        margin: 15mm 20mm;
+    }
+    
+    /* Prevent page breaks inside elements */
+    .invoice,
+    .receipt,
+    .invoice-items,
+    .receipt-items,
+    table {
+        page-break-inside: avoid;
+    }
+    
+    /* Allow page break before large sections */
+    .invoice-notes,
+    .receipt-notes,
+    .invoice-footer,
+    .receipt-footer {
+        page-break-before: auto;
+    }
+    
+    /* Links */
+    a {
+        color: #000 !important;
+        text-decoration: none !important;
+    }
+    
+    /* Tables */
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+    
+    th {
+        background-color: #f2f2f2 !important;
+    }
+    
+    /* Typography */
+    h1, h2, h3, h4, h5, h6 {
+        color: #000 !important;
+        page-break-after: avoid;
+    }
+    
+    /* Code blocks */
+    code {
+        background: #f4f4f4 !important;
+        border: 1px solid #ddd;
+        padding: 1px 4px;
+        font-family: monospace;
+    }
+    
+    /* Badges and status */
+    .badge,
+    .status {
+        border: 1px solid currentColor;
+        padding: 2px 8px;
+    }
+    
+    /* Images */
+    img {
+        max-width: 100% !important;
+    }
+    
+    /* Remove shadows and rounded corners for cleaner print */
+    .card,
+    .box,
+    .panel {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+        border-radius: 0 !important;
+    }
+}
+
+/* Screen styles for print preview */
+@media screen {
+    .print-only {
+        display: none;
+    }
+    
+    .print-preview {
+        max-width: 210mm;
+        margin: 0 auto;
+        padding: 20mm;
+        background: #fff;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+}
+
+/* Common print document styles */
+.print-document {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+}
+
+.print-document-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #333;
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+}
+
+.print-document-title {
+    font-size: 28pt;
+    font-weight: bold;
+    letter-spacing: 2px;
+    margin: 0;
+}
+
+.print-document-meta {
+    text-align: right;
+}
+
+.print-document-meta dt {
+    font-size: 9pt;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.print-document-meta dd {
+    font-size: 11pt;
+    margin: 0 0 10px 0;
+    font-weight: 600;
+}
+
+.print-document-parties {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+}
+
+.print-document-party h3 {
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #666;
+    margin: 0 0 10px 0;
+}
+
+.print-document-party p {
+    margin: 5px 0;
+    font-size: 10pt;
+}
+
+.print-document-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.print-document-table th {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.print-document-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    font-size: 10pt;
+}
+
+.print-document-table .text-right {
+    text-align: right;
+}
+
+.print-document-totals {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.print-document-totals table {
+    width: 250px;
+}
+
+.print-document-totals td {
+    padding: 8px 0;
+    border: none;
+}
+
+.print-document-totals .total-row {
+    font-size: 14pt;
+    font-weight: bold;
+    border-top: 2px solid #333;
+}
+
+.print-document-footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+    text-align: center;
+    font-size: 9pt;
+    color: #666;
+}

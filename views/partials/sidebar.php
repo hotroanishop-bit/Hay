@@ -30,6 +30,18 @@
             </li>
             
             <li class="nav-item">
+                <a href="/playground" class="nav-link <?php echo ($currentPage === 'playground') ? 'active' : ''; ?>">
+                    <span class="nav-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="4 17 10 11 4 5"></polyline>
+                            <line x1="12" y1="19" x2="20" y2="19"></line>
+                        </svg>
+                    </span>
+                    <span class="nav-text"><?php echo __('nav.playground', 'API Playground'); ?></span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
                 <a href="/billing" class="nav-link <?php echo (strpos($currentPage, 'billing') === 0 && $currentPage !== 'billing-auto-topup' || $currentPage === 'deposit') ? 'active' : ''; ?>">
                     <span class="nav-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -42,14 +54,28 @@
             </li>
             
             <li class="nav-item">
-                <a href="/billing/auto-topup" class="nav-link <?php echo ($currentPage === 'billing-auto-topup') ? 'active' : ''; ?>">
+                <a href="/referral" class="nav-link <?php echo ($currentPage === 'referral') ? 'active' : ''; ?>">
                     <span class="nav-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="23 4 23 10 17 10"></polyline>
-                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                         </svg>
                     </span>
-                    <span class="nav-text"><?php echo __('nav.auto_topup', 'Auto Top-Up'); ?></span>
+                    <span class="nav-text"><?php echo __('nav.referral', 'Referrals'); ?></span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="/webhooks" class="nav-link <?php echo ($currentPage === 'webhooks') ? 'active' : ''; ?>">
+                    <span class="nav-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                        </svg>
+                    </span>
+                    <span class="nav-text"><?php echo __('nav.webhooks', 'Webhooks'); ?></span>
                 </a>
             </li>
             
@@ -66,15 +92,47 @@
                 </a>
             </li>
             
+            <!-- Security Section -->
+            <li class="nav-section"><?php echo __('nav.security', 'Security'); ?></li>
+            
             <li class="nav-item">
-                <a href="/playground" class="nav-link <?php echo ($currentPage === 'playground') ? 'active' : ''; ?>">
+                <a href="/security/login-history" class="nav-link <?php echo ($currentPage === 'security-login-history') ? 'active' : ''; ?>">
                     <span class="nav-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="4 17 10 11 4 5"></polyline>
-                            <line x1="12" y1="19" x2="20" y2="19"></line>
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                         </svg>
                     </span>
-                    <span class="nav-text"><?php echo __('nav.playground', 'API Playground'); ?></span>
+                    <span class="nav-text"><?php echo __('nav.login_history', 'Login History'); ?></span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="/security/sessions" class="nav-link <?php echo ($currentPage === 'security-sessions') ? 'active' : ''; ?>">
+                    <span class="nav-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                    </span>
+                    <span class="nav-text"><?php echo __('nav.sessions', 'Sessions'); ?></span>
+                </a>
+            </li>
+            
+            <!-- Resources Section -->
+            <li class="nav-section"><?php echo __('nav.resources', 'Resources'); ?></li>
+            
+            <li class="nav-item">
+                <a href="/changelog" class="nav-link <?php echo ($currentPage === 'changelog') ? 'active' : ''; ?>">
+                    <span class="nav-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                    </span>
+                    <span class="nav-text"><?php echo __('nav.changelog', 'Changelog'); ?></span>
                 </a>
             </li>
             
@@ -98,82 +156,6 @@
                         </svg>
                     </span>
                     <span class="nav-text"><?php echo __('nav.support', 'Support'); ?></span>
-                </a>
-            </li>
-            
-            <li class="nav-item">
-                <a href="/profile" class="nav-link <?php echo (strpos($currentPage, 'profile') === 0 && $currentPage !== 'profile-telegram') ? 'active' : ''; ?>">
-                    <span class="nav-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                    </span>
-                    <span class="nav-text"><?php echo __('nav.profile', 'Profile'); ?></span>
-                </a>
-            </li>
-            
-            <li class="nav-item">
-                <a href="/profile/telegram" class="nav-link <?php echo ($currentPage === 'profile-telegram') ? 'active' : ''; ?>">
-                    <span class="nav-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-                        </svg>
-                    </span>
-                    <span class="nav-text"><?php echo __('nav.telegram', 'Telegram'); ?></span>
-                </a>
-            </li>
-            
-            <li class="nav-item">
-                <a href="/referral" class="nav-link <?php echo ($currentPage === 'referral') ? 'active' : ''; ?>">
-                    <span class="nav-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                    </span>
-                    <span class="nav-text"><?php echo __('nav.referral', 'Referral'); ?></span>
-                </a>
-            </li>
-            
-            <li class="nav-item">
-                <a href="/webhooks" class="nav-link <?php echo ($currentPage === 'webhooks') ? 'active' : ''; ?>">
-                    <span class="nav-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                        </svg>
-                    </span>
-                    <span class="nav-text"><?php echo __('nav.webhooks', 'Webhooks'); ?></span>
-                </a>
-            </li>
-            
-            <!-- Security Section -->
-            <li class="nav-section"><?php echo __('nav.security', 'Security'); ?></li>
-            
-            <li class="nav-item">
-                <a href="/security/sessions" class="nav-link <?php echo ($currentPage === 'security-sessions') ? 'active' : ''; ?>">
-                    <span class="nav-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                            <line x1="8" y1="21" x2="16" y2="21"></line>
-                            <line x1="12" y1="17" x2="12" y2="21"></line>
-                        </svg>
-                    </span>
-                    <span class="nav-text"><?php echo __('nav.sessions', 'Active Sessions'); ?></span>
-                </a>
-            </li>
-            
-            <li class="nav-item">
-                <a href="/security/login-history" class="nav-link <?php echo ($currentPage === 'security-login-history') ? 'active' : ''; ?>">
-                    <span class="nav-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                        </svg>
-                    </span>
-                    <span class="nav-text"><?php echo __('nav.login_history', 'Login History'); ?></span>
                 </a>
             </li>
             

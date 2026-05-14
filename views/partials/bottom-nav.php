@@ -25,14 +25,15 @@
         </span>
         <span class="bottom-nav-label">Billing</span>
     </a>
-    <a href="/docs" class="bottom-nav-item <?= $currentPage === 'docs' ? 'active' : '' ?>">
+    <a href="/analytics" class="bottom-nav-item <?= $currentPage === 'analytics' ? 'active' : '' ?>">
         <span class="bottom-nav-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
             </svg>
         </span>
-        <span class="bottom-nav-label">Docs</span>
+        <span class="bottom-nav-label">Analytics</span>
     </a>
     <button type="button" class="bottom-nav-item" data-bottom-sheet="moreSheet">
         <span class="bottom-nav-icon">

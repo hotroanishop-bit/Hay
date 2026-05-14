@@ -1533,6 +1533,24 @@ $routes = [
     ],
 
     // =====================
+    // Invoice Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/invoice/deposit/{id}',
+        'controller' => InvoiceController::class,
+        'action' => 'depositInvoice',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/invoice/purchase/{id}',
+        'controller' => InvoiceController::class,
+        'action' => 'purchaseReceipt',
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    // =====================
     // Auto Top-Up Routes
     // =====================
     [
