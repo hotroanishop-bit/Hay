@@ -1,0 +1,128 @@
+<?php
+/**
+ * Admin Page Form Page
+ * Variables: $pageTitle, $currentPage, $page, $isEdit
+ */
+?>
+
+<div class="page-header">
+    <div class="page-header-content">
+        <h1><?= $isEdit ? 'Edit Page' : 'Create Page' ?></h1>
+        <p><?= $isEdit ? 'Update page content and settings' : 'Create a new custom page' ?></p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form action="<?= $isEdit ? '/admin/pages/' . (int)$page['id'] . '/update' : '/admin/pages' ?>" method="POST">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+
+            <div class="form-row">
+                <div class="form-group col-md-8">
+                    <label for="title">Page Title <span class="text-danger">*</span></label>
+                    <input type="text" id="title" name="title" class="form-control" required
+                           value="<?= htmlspecialchars($page['title'] ?? '') ?>"
+                           placeholder="e.g., About Us, Privacy Policy">
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="slug">URL Slug</label>
+                    <div class="input-group">
+                        <span class="input-group-text">/page/</span>
+                        <input type="text" id="slug" name="slug" class="form-control"
+                               value="<?= htmlspecialchars($page['slug'] ?? '') ?>"
+                               placeholder="auto-generated">
+                    </div>
+                    <small class="form-text text-muted">Leave empty to auto-generate from title</small>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="content">Content</label>
+                <textarea id="content" name="content" class="form-control" rows="15"
+                          placeholder="Page content (supports HTML and Markdown)"><?= htmlspecialchars($page['content'] ?? '') ?></textarea>
+                <small class="form-text text-muted">You can use HTML tags for formatting</small>
+            </div>
+
+            <div class="form-group">
+                <label for="meta_description">Meta Description (SEO)</label>
+                <textarea id="meta_description" name="meta_description" class="form-control" rows="3"
+                          maxlength="160"
+                          placeholder="Brief description for search engines (max 160 characters)"><?= htmlspecialchars($page['meta_description'] ?? '') ?></textarea>
+                <small class="form-text text-muted">
+                    <span id="meta_char_count">0</span>/160 characters
+                </small>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="menu_order">Menu Order</label>
+                    <input type="number" id="menu_order" name="menu_order" class="form-control"
+                           min="0" value="<?= (int)($page['menu_order'] ?? 0) ?>">
+                    <small class="form-text text-muted">Lower numbers appear first</small>
+                </div>
+                <div class="form-group col-md-4">
+                    <div class="form-check mt-4">
+                        <input type="checkbox" id="show_in_menu" name="show_in_menu" class="form-check-input"
+                               <?= (!empty($page['show_in_menu'])) ? 'checked' : '' ?>>
+                        <label for="show_in_menu" class="form-check-label">Show in Menu</label>
+                    </div>
+                </div>
+                <div class="form-group col-md-4">
+                    <div class="form-check mt-4">
+                        <input type="checkbox" id="is_published" name="is_published" class="form-check-input"
+                               <?= ($isEdit ? !empty($page['is_published']) : true) ? 'checked' : '' ?>>
+                        <label for="is_published" class="form-check-label">Published</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="icon-save"></i> <?= $isEdit ? 'Update Page' : 'Create Page' ?>
+                </button>
+                <a href="/admin/pages" class="btn btn-secondary">Cancel</a>
+                <?php if ($isEdit && !empty($page['slug'])): ?>
+                <a href="/page/<?= htmlspecialchars($page['slug']) ?>" class="btn btn-info" target="_blank">
+                    <i class="icon-external-link"></i> Preview
+                </a>
+                <?php endif; ?>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Auto-generate slug from title
+document.getElementById('title').addEventListener('input', function() {
+    var slugField = document.getElementById('slug');
+    if (!slugField.value || slugField.dataset.autoGenerated === 'true') {
+        var slug = this.value.toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/[\s_]+/g, '-')
+            .replace(/-+/g, '-')
+            .trim();
+        slugField.value = slug;
+        slugField.dataset.autoGenerated = 'true';
+    }
+});
+
+document.getElementById('slug').addEventListener('input', function() {
+    this.dataset.autoGenerated = 'false';
+});
+
+// Character count for meta description
+var metaDesc = document.getElementById('meta_description');
+var metaCount = document.getElementById('meta_char_count');
+
+function updateMetaCount() {
+    metaCount.textContent = metaDesc.value.length;
+    if (metaDesc.value.length > 160) {
+        metaCount.style.color = 'var(--danger-color, #dc3545)';
+    } else {
+        metaCount.style.color = '';
+    }
+}
+
+metaDesc.addEventListener('input', updateMetaCount);
+updateMetaCount();
+</script>

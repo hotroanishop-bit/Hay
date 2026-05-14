@@ -712,6 +712,197 @@ $routes = [
     ],
 
     // =====================
+    // Admin Themes Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/themes',
+        'controller' => AdminController::class,
+        'action' => 'themes',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/themes/create',
+        'controller' => AdminController::class,
+        'action' => 'createTheme',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/themes',
+        'controller' => AdminController::class,
+        'action' => 'storeTheme',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/themes/{id}/edit',
+        'controller' => AdminController::class,
+        'action' => 'editTheme',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/themes/{id}/update',
+        'controller' => AdminController::class,
+        'action' => 'updateTheme',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/themes/{id}/delete',
+        'controller' => AdminController::class,
+        'action' => 'deleteTheme',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/themes/{id}/default',
+        'controller' => AdminController::class,
+        'action' => 'setDefaultTheme',
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    // =====================
+    // Admin Custom Pages Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/pages',
+        'controller' => AdminController::class,
+        'action' => 'pages',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/pages/create',
+        'controller' => AdminController::class,
+        'action' => 'createPage',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/pages',
+        'controller' => AdminController::class,
+        'action' => 'storePage',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/pages/{id}/edit',
+        'controller' => AdminController::class,
+        'action' => 'editPage',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/pages/{id}/update',
+        'controller' => AdminController::class,
+        'action' => 'updatePage',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/pages/{id}/delete',
+        'controller' => AdminController::class,
+        'action' => 'deletePage',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/pages/{id}/toggle-publish',
+        'controller' => AdminController::class,
+        'action' => 'togglePublishPage',
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    // =====================
+    // Admin Menu Items Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/menu',
+        'controller' => AdminController::class,
+        'action' => 'menuItems',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/menu/create',
+        'controller' => AdminController::class,
+        'action' => 'createMenuItem',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/menu',
+        'controller' => AdminController::class,
+        'action' => 'storeMenuItem',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/menu/reorder',
+        'controller' => AdminController::class,
+        'action' => 'reorderMenuItems',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/menu/{id}/edit',
+        'controller' => AdminController::class,
+        'action' => 'editMenuItem',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/menu/{id}/update',
+        'controller' => AdminController::class,
+        'action' => 'updateMenuItem',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/menu/{id}/delete',
+        'controller' => AdminController::class,
+        'action' => 'deleteMenuItem',
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    // =====================
+    // Admin Notifications Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/notifications',
+        'controller' => AdminController::class,
+        'action' => 'adminNotifications',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/notifications/send',
+        'controller' => AdminController::class,
+        'action' => 'sendNotification',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/notifications',
+        'controller' => AdminController::class,
+        'action' => 'storeNotification',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/notifications/{id}/delete',
+        'controller' => AdminController::class,
+        'action' => 'deleteAdminNotification',
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    // =====================
     // Theme Routes (Public - saves to session/user)
     // =====================
     [

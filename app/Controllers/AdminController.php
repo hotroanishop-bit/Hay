@@ -18,6 +18,10 @@ class AdminController extends BaseController
     private Deposit $depositModel;
     private AuditLog $auditLogModel;
     private UsageLog $usageLogModel;
+    private Theme $themeModel;
+    private CustomPage $customPageModel;
+    private MenuItem $menuItemModel;
+    private Notification $notificationModel;
 
     public function __construct()
     {
@@ -35,6 +39,10 @@ class AdminController extends BaseController
         $this->depositModel = new Deposit();
         $this->auditLogModel = new AuditLog();
         $this->usageLogModel = new UsageLog();
+        $this->themeModel = new Theme();
+        $this->customPageModel = new CustomPage();
+        $this->menuItemModel = new MenuItem();
+        $this->notificationModel = new Notification();
     }
 
     /**
@@ -1188,13 +1196,31 @@ class AdminController extends BaseController
         }
 
         $user = $this->authService->user();
+        
+        // Include TokenHelper if not already loaded
+        $helperPath = dirname(__DIR__) . '/Helpers/TokenHelper.php';
+        if (file_exists($helperPath) && !function_exists('parseTokenNotation')) {
+            require_once $helperPath;
+        }
+        
+        // Parse token_quota notation (e.g., 10k, 100k, 1M)
+        $tokenQuotaInput = trim($_POST['token_quota'] ?? '0');
+        $tokenQuota = function_exists('parseTokenNotation') 
+            ? parseTokenNotation($tokenQuotaInput) 
+            : (int) $tokenQuotaInput;
+        
+        $isFree = isset($_POST['is_free']) ? 1 : 0;
 
         $data = [
             'name' => trim($_POST['name'] ?? ''),
+            'description' => trim($_POST['description'] ?? ''),
             'price_monthly' => (float)($_POST['price_monthly'] ?? 0),
             'rate_limit_per_minute' => (int)($_POST['rate_limit_per_minute'] ?? 60),
             'daily_token_limit' => (int)($_POST['daily_token_limit'] ?? 100000),
             'price_multiplier' => (float)($_POST['price_multiplier'] ?? 1.0),
+            'token_quota' => $tokenQuota,
+            'duration_days' => (int)($_POST['duration_days'] ?? 30),
+            'is_free' => $isFree,
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s')
@@ -1256,13 +1282,31 @@ class AdminController extends BaseController
             $this->redirect('/admin/plans');
             return;
         }
+        
+        // Include TokenHelper if not already loaded
+        $helperPath = dirname(__DIR__) . '/Helpers/TokenHelper.php';
+        if (file_exists($helperPath) && !function_exists('parseTokenNotation')) {
+            require_once $helperPath;
+        }
+        
+        // Parse token_quota notation (e.g., 10k, 100k, 1M)
+        $tokenQuotaInput = trim($_POST['token_quota'] ?? '0');
+        $tokenQuota = function_exists('parseTokenNotation') 
+            ? parseTokenNotation($tokenQuotaInput) 
+            : (int) $tokenQuotaInput;
+        
+        $isFree = isset($_POST['is_free']) ? 1 : 0;
 
         $data = [
             'name' => trim($_POST['name'] ?? ''),
+            'description' => trim($_POST['description'] ?? ''),
             'price_monthly' => (float)($_POST['price_monthly'] ?? 0),
             'rate_limit_per_minute' => (int)($_POST['rate_limit_per_minute'] ?? 60),
             'daily_token_limit' => (int)($_POST['daily_token_limit'] ?? 100000),
             'price_multiplier' => (float)($_POST['price_multiplier'] ?? 1.0),
+            'token_quota' => $tokenQuota,
+            'duration_days' => (int)($_POST['duration_days'] ?? 30),
+            'is_free' => $isFree,
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
             'updated_at' => date('Y-m-d H:i:s')
         ];
@@ -1690,5 +1734,876 @@ class AdminController extends BaseController
 
         $this->setFlash('success', 'Model pricing deactivated successfully');
         $this->redirect('/admin/model-pricing');
+    }
+
+    // =====================
+    // Themes Management
+    // =====================
+
+    /**
+     * List all themes
+     */
+    public function themes(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $themes = $this->themeModel->findAll([], 'name ASC');
+
+        $this->currentPage = 'admin-themes';
+        $this->render('admin/themes', [
+            'pageTitle' => 'Admin - Themes',
+            'currentPage' => $this->currentPage,
+            'themes' => $themes
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Show create theme form
+     */
+    public function createTheme(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $this->currentPage = 'admin-themes';
+        $this->render('admin/theme_form', [
+            'pageTitle' => 'Admin - Create Theme',
+            'currentPage' => $this->currentPage,
+            'theme' => null,
+            'isEdit' => false
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Store a new theme
+     */
+    public function storeTheme(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $user = $this->authService->user();
+        $name = trim($_POST['name'] ?? '');
+        $cssVariablesRaw = trim($_POST['css_variables'] ?? '{}');
+        $isDefault = isset($_POST['is_default']) ? 1 : 0;
+
+        if (empty($name)) {
+            $this->setFlash('error', 'Theme name is required');
+            $this->redirect('/admin/themes/create');
+            return;
+        }
+
+        // Validate JSON
+        $cssVariables = json_decode($cssVariablesRaw, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $this->setFlash('error', 'CSS Variables must be valid JSON');
+            $this->redirect('/admin/themes/create');
+            return;
+        }
+
+        $data = [
+            'name' => $name,
+            'css_variables' => $cssVariablesRaw,
+            'is_default' => $isDefault,
+            'created_by' => $user['id'],
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+
+        $themeId = $this->themeModel->create($data);
+
+        // If set as default, update others
+        if ($isDefault) {
+            $this->themeModel->setDefault($themeId);
+        }
+
+        $this->auditService->log($user['id'], 'theme_created', ['theme_id' => $themeId, 'name' => $name]);
+
+        $this->setFlash('success', 'Theme created successfully');
+        $this->redirect('/admin/themes');
+    }
+
+    /**
+     * Show edit theme form
+     */
+    public function editTheme(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $theme = $this->themeModel->find($id);
+
+        if (!$theme) {
+            $this->setFlash('error', 'Theme not found');
+            $this->redirect('/admin/themes');
+            return;
+        }
+
+        $this->currentPage = 'admin-themes';
+        $this->render('admin/theme_form', [
+            'pageTitle' => 'Admin - Edit Theme',
+            'currentPage' => $this->currentPage,
+            'theme' => $theme,
+            'isEdit' => true
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Update a theme
+     */
+    public function updateTheme(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $user = $this->authService->user();
+        $theme = $this->themeModel->find($id);
+
+        if (!$theme) {
+            $this->setFlash('error', 'Theme not found');
+            $this->redirect('/admin/themes');
+            return;
+        }
+
+        $name = trim($_POST['name'] ?? '');
+        $cssVariablesRaw = trim($_POST['css_variables'] ?? '{}');
+        $isDefault = isset($_POST['is_default']) ? 1 : 0;
+
+        if (empty($name)) {
+            $this->setFlash('error', 'Theme name is required');
+            $this->redirect('/admin/themes/' . $id . '/edit');
+            return;
+        }
+
+        // Validate JSON
+        $cssVariables = json_decode($cssVariablesRaw, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $this->setFlash('error', 'CSS Variables must be valid JSON');
+            $this->redirect('/admin/themes/' . $id . '/edit');
+            return;
+        }
+
+        $data = [
+            'name' => $name,
+            'css_variables' => $cssVariablesRaw,
+            'is_default' => $isDefault
+        ];
+
+        $this->themeModel->update($id, $data);
+
+        // If set as default, update others
+        if ($isDefault) {
+            $this->themeModel->setDefault($id);
+        }
+
+        $this->auditService->log($user['id'], 'theme_updated', ['theme_id' => $id, 'name' => $name]);
+
+        $this->setFlash('success', 'Theme updated successfully');
+        $this->redirect('/admin/themes');
+    }
+
+    /**
+     * Delete a theme
+     */
+    public function deleteTheme(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $user = $this->authService->user();
+        $theme = $this->themeModel->find($id);
+
+        if (!$theme) {
+            $this->setFlash('error', 'Theme not found');
+            $this->redirect('/admin/themes');
+            return;
+        }
+
+        // Cannot delete default theme
+        if (!empty($theme['is_default'])) {
+            $this->setFlash('error', 'Cannot delete the default theme. Set another theme as default first.');
+            $this->redirect('/admin/themes');
+            return;
+        }
+
+        $this->themeModel->delete($id);
+        $this->auditService->log($user['id'], 'theme_deleted', ['theme_id' => $id, 'name' => $theme['name']]);
+
+        $this->setFlash('success', 'Theme deleted successfully');
+        $this->redirect('/admin/themes');
+    }
+
+    /**
+     * Set a theme as the default
+     */
+    public function setDefaultTheme(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $user = $this->authService->user();
+        $theme = $this->themeModel->find($id);
+
+        if (!$theme) {
+            $this->setFlash('error', 'Theme not found');
+            $this->redirect('/admin/themes');
+            return;
+        }
+
+        $this->themeModel->setDefault($id);
+        $this->auditService->log($user['id'], 'theme_set_default', ['theme_id' => $id, 'name' => $theme['name']]);
+
+        $this->setFlash('success', 'Theme "' . htmlspecialchars($theme['name']) . '" set as default');
+        $this->redirect('/admin/themes');
+    }
+
+    // =====================
+    // Custom Pages Management
+    // =====================
+
+    /**
+     * List all custom pages
+     */
+    public function pages(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $pages = $this->customPageModel->findAll([], 'menu_order ASC, title ASC');
+
+        $this->currentPage = 'admin-pages';
+        $this->render('admin/pages', [
+            'pageTitle' => 'Admin - Custom Pages',
+            'currentPage' => $this->currentPage,
+            'pages' => $pages
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Show create page form
+     */
+    public function createPage(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $this->currentPage = 'admin-pages';
+        $this->render('admin/page_form', [
+            'pageTitle' => 'Admin - Create Page',
+            'currentPage' => $this->currentPage,
+            'page' => null,
+            'isEdit' => false
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Store a new custom page
+     */
+    public function storePage(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $user = $this->authService->user();
+
+        $title = trim($_POST['title'] ?? '');
+        $slug = trim($_POST['slug'] ?? '');
+        $content = trim($_POST['content'] ?? '');
+        $metaDescription = trim($_POST['meta_description'] ?? '');
+        $menuOrder = (int)($_POST['menu_order'] ?? 0);
+        $showInMenu = isset($_POST['show_in_menu']) ? 1 : 0;
+        $isPublished = isset($_POST['is_published']) ? 1 : 0;
+
+        if (empty($title)) {
+            $this->setFlash('error', 'Page title is required');
+            $this->redirect('/admin/pages/create');
+            return;
+        }
+
+        // Auto-generate slug if empty
+        if (empty($slug)) {
+            $slug = $this->generateSlug($title);
+        } else {
+            $slug = $this->generateSlug($slug);
+        }
+
+        // Check for duplicate slug
+        $existing = $this->customPageModel->findBySlug($slug);
+        if ($existing) {
+            $slug = $slug . '-' . time();
+        }
+
+        $data = [
+            'title' => $title,
+            'slug' => $slug,
+            'content' => $content,
+            'meta_description' => $metaDescription,
+            'menu_order' => $menuOrder,
+            'show_in_menu' => $showInMenu,
+            'is_published' => $isPublished,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        $pageId = $this->customPageModel->create($data);
+        $this->auditService->log($user['id'], 'page_created', ['page_id' => $pageId, 'title' => $title, 'slug' => $slug]);
+
+        $this->setFlash('success', 'Page created successfully');
+        $this->redirect('/admin/pages');
+    }
+
+    /**
+     * Show edit page form
+     */
+    public function editPage(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $page = $this->customPageModel->find($id);
+
+        if (!$page) {
+            $this->setFlash('error', 'Page not found');
+            $this->redirect('/admin/pages');
+            return;
+        }
+
+        $this->currentPage = 'admin-pages';
+        $this->render('admin/page_form', [
+            'pageTitle' => 'Admin - Edit Page',
+            'currentPage' => $this->currentPage,
+            'page' => $page,
+            'isEdit' => true
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Update a custom page
+     */
+    public function updatePage(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $user = $this->authService->user();
+        $page = $this->customPageModel->find($id);
+
+        if (!$page) {
+            $this->setFlash('error', 'Page not found');
+            $this->redirect('/admin/pages');
+            return;
+        }
+
+        $title = trim($_POST['title'] ?? '');
+        $slug = trim($_POST['slug'] ?? '');
+        $content = trim($_POST['content'] ?? '');
+        $metaDescription = trim($_POST['meta_description'] ?? '');
+        $menuOrder = (int)($_POST['menu_order'] ?? 0);
+        $showInMenu = isset($_POST['show_in_menu']) ? 1 : 0;
+        $isPublished = isset($_POST['is_published']) ? 1 : 0;
+
+        if (empty($title)) {
+            $this->setFlash('error', 'Page title is required');
+            $this->redirect('/admin/pages/' . $id . '/edit');
+            return;
+        }
+
+        // Auto-generate slug if empty
+        if (empty($slug)) {
+            $slug = $this->generateSlug($title);
+        } else {
+            $slug = $this->generateSlug($slug);
+        }
+
+        // Check for duplicate slug (excluding current page)
+        $sql = "SELECT id FROM custom_pages WHERE slug = :slug AND id != :id LIMIT 1";
+        $existing = $this->customPageModel->query($sql, ['slug' => $slug, 'id' => $id]);
+        if (!empty($existing)) {
+            $slug = $slug . '-' . time();
+        }
+
+        $data = [
+            'title' => $title,
+            'slug' => $slug,
+            'content' => $content,
+            'meta_description' => $metaDescription,
+            'menu_order' => $menuOrder,
+            'show_in_menu' => $showInMenu,
+            'is_published' => $isPublished,
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        $this->customPageModel->update($id, $data);
+        $this->auditService->log($user['id'], 'page_updated', ['page_id' => $id, 'title' => $title]);
+
+        $this->setFlash('success', 'Page updated successfully');
+        $this->redirect('/admin/pages');
+    }
+
+    /**
+     * Delete a custom page
+     */
+    public function deletePage(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $user = $this->authService->user();
+        $page = $this->customPageModel->find($id);
+
+        if (!$page) {
+            $this->setFlash('error', 'Page not found');
+            $this->redirect('/admin/pages');
+            return;
+        }
+
+        $this->customPageModel->delete($id);
+        $this->auditService->log($user['id'], 'page_deleted', ['page_id' => $id, 'title' => $page['title']]);
+
+        $this->setFlash('success', 'Page deleted successfully');
+        $this->redirect('/admin/pages');
+    }
+
+    /**
+     * Toggle page publish status
+     */
+    public function togglePublishPage(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $user = $this->authService->user();
+        $page = $this->customPageModel->find($id);
+
+        if (!$page) {
+            $this->setFlash('error', 'Page not found');
+            $this->redirect('/admin/pages');
+            return;
+        }
+
+        $newStatus = empty($page['is_published']) ? 1 : 0;
+        $this->customPageModel->update($id, [
+            'is_published' => $newStatus,
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
+
+        $statusText = $newStatus ? 'published' : 'unpublished';
+        $this->auditService->log($user['id'], 'page_' . $statusText, ['page_id' => $id, 'title' => $page['title']]);
+
+        $this->setFlash('success', 'Page ' . $statusText . ' successfully');
+        $this->redirect('/admin/pages');
+    }
+
+    /**
+     * Generate URL slug from text
+     */
+    private function generateSlug(string $text): string
+    {
+        $slug = strtolower($text);
+        $slug = preg_replace('/[^a-z0-9\s-]/', '', $slug);
+        $slug = preg_replace('/[\s_]+/', '-', $slug);
+        $slug = preg_replace('/-+/', '-', $slug);
+        $slug = trim($slug, '-');
+        
+        return $slug ?: 'page-' . time();
+    }
+
+    // =====================
+    // Menu Items Management
+    // =====================
+
+    /**
+     * List all menu items
+     */
+    public function menuItems(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $menuItems = $this->menuItemModel->findAll([], 'sort_order ASC, label ASC');
+
+        $this->currentPage = 'admin-menu';
+        $this->render('admin/menu', [
+            'pageTitle' => 'Admin - Menu Items',
+            'currentPage' => $this->currentPage,
+            'menuItems' => $menuItems
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Show create menu item form
+     */
+    public function createMenuItem(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $this->currentPage = 'admin-menu';
+        $this->render('admin/menu_form', [
+            'pageTitle' => 'Admin - Create Menu Item',
+            'currentPage' => $this->currentPage,
+            'menuItem' => null,
+            'isEdit' => false
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Store a new menu item
+     */
+    public function storeMenuItem(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $user = $this->authService->user();
+
+        $label = trim($_POST['label'] ?? '');
+        $icon = trim($_POST['icon'] ?? '');
+        $url = trim($_POST['url'] ?? '#');
+        $sortOrder = (int)($_POST['sort_order'] ?? 0);
+        $showInBottomNav = isset($_POST['show_in_bottom_nav']) ? 1 : 0;
+        $showInBottomSheet = isset($_POST['show_in_bottom_sheet']) ? 1 : 0;
+        $isActive = isset($_POST['is_active']) ? 1 : 0;
+
+        if (empty($label)) {
+            $this->setFlash('error', 'Menu item label is required');
+            $this->redirect('/admin/menu/create');
+            return;
+        }
+
+        $data = [
+            'label' => $label,
+            'icon' => $icon,
+            'url' => $url,
+            'sort_order' => $sortOrder,
+            'show_in_bottom_nav' => $showInBottomNav,
+            'show_in_bottom_sheet' => $showInBottomSheet,
+            'is_active' => $isActive,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        $menuItemId = $this->menuItemModel->create($data);
+        $this->auditService->log($user['id'], 'menu_item_created', ['menu_item_id' => $menuItemId, 'label' => $label]);
+
+        $this->setFlash('success', 'Menu item created successfully');
+        $this->redirect('/admin/menu');
+    }
+
+    /**
+     * Show edit menu item form
+     */
+    public function editMenuItem(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $menuItem = $this->menuItemModel->find($id);
+
+        if (!$menuItem) {
+            $this->setFlash('error', 'Menu item not found');
+            $this->redirect('/admin/menu');
+            return;
+        }
+
+        $this->currentPage = 'admin-menu';
+        $this->render('admin/menu_form', [
+            'pageTitle' => 'Admin - Edit Menu Item',
+            'currentPage' => $this->currentPage,
+            'menuItem' => $menuItem,
+            'isEdit' => true
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Update a menu item
+     */
+    public function updateMenuItem(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $user = $this->authService->user();
+        $menuItem = $this->menuItemModel->find($id);
+
+        if (!$menuItem) {
+            $this->setFlash('error', 'Menu item not found');
+            $this->redirect('/admin/menu');
+            return;
+        }
+
+        $label = trim($_POST['label'] ?? '');
+        $icon = trim($_POST['icon'] ?? '');
+        $url = trim($_POST['url'] ?? '#');
+        $sortOrder = (int)($_POST['sort_order'] ?? 0);
+        $showInBottomNav = isset($_POST['show_in_bottom_nav']) ? 1 : 0;
+        $showInBottomSheet = isset($_POST['show_in_bottom_sheet']) ? 1 : 0;
+        $isActive = isset($_POST['is_active']) ? 1 : 0;
+
+        if (empty($label)) {
+            $this->setFlash('error', 'Menu item label is required');
+            $this->redirect('/admin/menu/' . $id . '/edit');
+            return;
+        }
+
+        $data = [
+            'label' => $label,
+            'icon' => $icon,
+            'url' => $url,
+            'sort_order' => $sortOrder,
+            'show_in_bottom_nav' => $showInBottomNav,
+            'show_in_bottom_sheet' => $showInBottomSheet,
+            'is_active' => $isActive,
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        $this->menuItemModel->update($id, $data);
+        $this->auditService->log($user['id'], 'menu_item_updated', ['menu_item_id' => $id, 'label' => $label]);
+
+        $this->setFlash('success', 'Menu item updated successfully');
+        $this->redirect('/admin/menu');
+    }
+
+    /**
+     * Delete a menu item
+     */
+    public function deleteMenuItem(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $user = $this->authService->user();
+        $menuItem = $this->menuItemModel->find($id);
+
+        if (!$menuItem) {
+            $this->setFlash('error', 'Menu item not found');
+            $this->redirect('/admin/menu');
+            return;
+        }
+
+        $this->menuItemModel->delete($id);
+        $this->auditService->log($user['id'], 'menu_item_deleted', ['menu_item_id' => $id, 'label' => $menuItem['label']]);
+
+        $this->setFlash('success', 'Menu item deleted successfully');
+        $this->redirect('/admin/menu');
+    }
+
+    /**
+     * Reorder menu items via JSON POST
+     */
+    public function reorderMenuItems(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $user = $this->authService->user();
+
+        // Get JSON body
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+
+        if (!is_array($data) || empty($data['items'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Invalid data']);
+            return;
+        }
+
+        try {
+            $this->menuItemModel->reorder($data['items']);
+            $this->auditService->log($user['id'], 'menu_items_reordered', ['count' => count($data['items'])]);
+
+            echo json_encode(['success' => true]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Failed to reorder items']);
+        }
+    }
+
+    // =====================
+    // Admin Notifications Management
+    // =====================
+
+    /**
+     * List all notifications (admin view)
+     */
+    public function adminNotifications(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $perPage = 30;
+        $offset = ($page - 1) * $perPage;
+
+        // Get all notifications with user info
+        $sql = "SELECT n.*, u.name as user_name, u.email as user_email 
+                FROM notifications n 
+                LEFT JOIN users u ON n.user_id = u.id 
+                ORDER BY n.created_at DESC 
+                LIMIT {$perPage} OFFSET {$offset}";
+        $notifications = $this->notificationModel->query($sql);
+
+        // Get total count
+        $countSql = "SELECT COUNT(*) as total FROM notifications";
+        $countResult = $this->notificationModel->query($countSql);
+        $total = (int)($countResult[0]['total'] ?? 0);
+
+        $this->currentPage = 'admin-notifications';
+        $this->render('admin/notifications', [
+            'pageTitle' => 'Admin - Notifications',
+            'currentPage' => $this->currentPage,
+            'notifications' => $notifications,
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => (int)ceil($total / $perPage),
+                'total' => $total,
+                'per_page' => $perPage
+            ]
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Show send notification form
+     */
+    public function sendNotification(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        // Get all users for dropdown
+        $users = $this->userModel->findAll([], 'name ASC');
+
+        $this->currentPage = 'admin-notifications';
+        $this->render('admin/notification_form', [
+            'pageTitle' => 'Admin - Send Notification',
+            'currentPage' => $this->currentPage,
+            'users' => $users
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Store (send) a new notification
+     */
+    public function storeNotification(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+
+        $title = trim($_POST['title'] ?? '');
+        $message = trim($_POST['message'] ?? '');
+        $type = trim($_POST['type'] ?? 'info');
+        $isBroadcast = isset($_POST['is_broadcast']) ? true : false;
+        $userId = (int)($_POST['user_id'] ?? 0);
+
+        if (empty($title) || empty($message)) {
+            $this->setFlash('error', 'Title and message are required');
+            $this->redirect('/admin/notifications/send');
+            return;
+        }
+
+        // Validate type
+        $validTypes = ['info', 'success', 'warning', 'error'];
+        if (!in_array($type, $validTypes)) {
+            $type = 'info';
+        }
+
+        if ($isBroadcast) {
+            // Create broadcast notification (null user_id)
+            $notificationId = $this->notificationModel->createBroadcast($title, $message, $type);
+            $this->auditService->log($admin['id'], 'notification_broadcast', [
+                'notification_id' => $notificationId,
+                'title' => $title,
+                'type' => $type
+            ]);
+            $this->setFlash('success', 'Broadcast notification sent to all users');
+        } else {
+            if ($userId <= 0) {
+                $this->setFlash('error', 'Please select a user or enable broadcast');
+                $this->redirect('/admin/notifications/send');
+                return;
+            }
+
+            // Verify user exists
+            $user = $this->userModel->find($userId);
+            if (!$user) {
+                $this->setFlash('error', 'Selected user not found');
+                $this->redirect('/admin/notifications/send');
+                return;
+            }
+
+            // Create notification for specific user
+            $notificationId = $this->notificationModel->create([
+                'user_id' => $userId,
+                'title' => $title,
+                'message' => $message,
+                'type' => $type,
+                'is_read' => 0,
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+
+            $this->auditService->log($admin['id'], 'notification_sent', [
+                'notification_id' => $notificationId,
+                'user_id' => $userId,
+                'title' => $title,
+                'type' => $type
+            ]);
+            $this->setFlash('success', 'Notification sent to ' . htmlspecialchars($user['name']));
+        }
+
+        $this->redirect('/admin/notifications');
+    }
+
+    /**
+     * Delete a notification
+     */
+    public function deleteAdminNotification(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $notification = $this->notificationModel->find($id);
+
+        if (!$notification) {
+            $this->setFlash('error', 'Notification not found');
+            $this->redirect('/admin/notifications');
+            return;
+        }
+
+        $this->notificationModel->delete($id);
+        $this->auditService->log($admin['id'], 'notification_deleted', [
+            'notification_id' => $id,
+            'title' => $notification['title']
+        ]);
+
+        $this->setFlash('success', 'Notification deleted successfully');
+        $this->redirect('/admin/notifications');
     }
 }
