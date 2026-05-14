@@ -17,9 +17,10 @@
 
     // Sidebar Toggle
     function initSidebar() {
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const appContainer = document.querySelector('.app-container');
-        const sidebar = document.getElementById('sidebar');
+        var sidebarToggle = document.getElementById('sidebarToggle');
+        var appContainer = document.querySelector('.app-container');
+        var sidebar = document.getElementById('sidebar');
+        var sidebarOverlay = document.querySelector('.sidebar-overlay');
 
         if (sidebarToggle && appContainer) {
             sidebarToggle.addEventListener('click', function() {
@@ -28,15 +29,38 @@
                 // Mobile: toggle sidebar open/close
                 if (window.innerWidth <= 768 && sidebar) {
                     sidebar.classList.toggle('open');
+                    if (sidebarOverlay) {
+                        sidebarOverlay.classList.toggle('open');
+                    }
                 }
             });
         }
+
+        // Close sidebar when clicking overlay (mobile)
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', function() {
+                if (sidebar) {
+                    sidebar.classList.remove('open');
+                }
+                sidebarOverlay.classList.remove('open');
+            });
+        }
+
+        // Close sidebar on window resize to desktop
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768 && sidebar) {
+                sidebar.classList.remove('open');
+                if (sidebarOverlay) {
+                    sidebarOverlay.classList.remove('open');
+                }
+            }
+        });
     }
 
     // User Dropdown
     function initUserDropdown() {
-        const toggleBtn = document.getElementById('userDropdownToggle');
-        const dropdownMenu = document.getElementById('userDropdownMenu');
+        var toggleBtn = document.getElementById('userDropdownToggle');
+        var dropdownMenu = document.getElementById('userDropdownMenu');
 
         if (toggleBtn && dropdownMenu) {
             toggleBtn.addEventListener('click', function(e) {
@@ -232,6 +256,75 @@
         initUserDropdown();
         initAlerts();
         initModals();
+        initBottomNavActiveState();
+        initSmoothScroll();
+        
+        // Initialize ThemeSwitcher if available
+        if (typeof ThemeSwitcher !== 'undefined' && ThemeSwitcher.init) {
+            ThemeSwitcher.init();
+        }
+        
+        // Initialize NotificationManager if available
+        if (typeof NotificationManager !== 'undefined' && NotificationManager.init) {
+            NotificationManager.init();
+        }
+        
+        // Initialize all BottomSheet instances if available
+        if (typeof BottomSheet !== 'undefined' && BottomSheet.initAll) {
+            BottomSheet.initAll();
+        }
     });
+
+    /**
+     * Initialize bottom navigation active state
+     * Highlights the current page in the bottom nav
+     */
+    function initBottomNavActiveState() {
+        var bottomNav = document.querySelector('.bottom-nav');
+        if (!bottomNav) return;
+
+        var currentPath = window.location.pathname;
+        var navLinks = bottomNav.querySelectorAll('.bottom-nav-item');
+
+        navLinks.forEach(function(link) {
+            var href = link.getAttribute('href');
+            if (!href) return;
+
+            // Remove existing active class
+            link.classList.remove('active');
+
+            // Check if this link matches current path
+            if (href === currentPath || 
+                (href !== '/' && currentPath.indexOf(href) === 0)) {
+                link.classList.add('active');
+            }
+        });
+    }
+
+    /**
+     * Initialize smooth scrolling for anchor links
+     */
+    function initSmoothScroll() {
+        document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+            anchor.addEventListener('click', function(e) {
+                var targetId = this.getAttribute('href');
+                if (targetId === '#' || targetId === '#!') return;
+
+                var targetEl = document.querySelector(targetId);
+                if (targetEl) {
+                    e.preventDefault();
+                    targetEl.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    
+                    // Update URL without scrolling
+                    if (history.pushState) {
+                        history.pushState(null, null, targetId);
+                    }
+                }
+            });
+        });
+    }
 
 })();
