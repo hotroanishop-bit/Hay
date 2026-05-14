@@ -130,6 +130,11 @@ class ApiProxyController extends BaseController
             $this->error('Invalid model: ' . $model, 400, 'model_not_found');
         }
         
+        // Check model permissions for this API key
+        if (!$this->apiKeyModel->isModelAllowed($apiKey, $model)) {
+            $this->error('This API key does not have access to model: ' . $model, 403, 'permission_error');
+        }
+        
         // Validate messages
         if (empty($messages) || !is_array($messages)) {
             $this->error('Messages array is required', 400);
@@ -319,6 +324,7 @@ class ApiProxyController extends BaseController
         $requestId = $this->generateRequestId();
         
         // Get authenticated key info
+        $apiKey = $this->getAuthenticatedKey();
         $apiKeyId = (int) ($_SERVER['API_KEY_ID'] ?? 0);
         $userId = (int) ($_SERVER['API_USER_ID'] ?? 0);
         
@@ -344,6 +350,11 @@ class ApiProxyController extends BaseController
         
         if (!$this->proxyService->isValidModel($model)) {
             $this->error('Invalid model: ' . $model, 400, 'model_not_found');
+        }
+        
+        // Check model permissions for this API key
+        if (!$this->apiKeyModel->isModelAllowed($apiKey, $model)) {
+            $this->error('This API key does not have access to model: ' . $model, 403, 'permission_error');
         }
         
         // Validate prompt
@@ -548,6 +559,7 @@ class ApiProxyController extends BaseController
         $requestId = $this->generateRequestId();
         
         // Get authenticated key info
+        $apiKey = $this->getAuthenticatedKey();
         $apiKeyId = (int) ($_SERVER['API_KEY_ID'] ?? 0);
         $userId = (int) ($_SERVER['API_USER_ID'] ?? 0);
         
@@ -572,6 +584,11 @@ class ApiProxyController extends BaseController
         
         if (!$this->proxyService->isValidModel($model)) {
             $this->error('Invalid model: ' . $model, 400, 'model_not_found');
+        }
+        
+        // Check model permissions for this API key
+        if (!$this->apiKeyModel->isModelAllowed($apiKey, $model)) {
+            $this->error('This API key does not have access to model: ' . $model, 403, 'permission_error');
         }
         
         // Validate input
@@ -640,6 +657,7 @@ class ApiProxyController extends BaseController
     {
         // Get authenticated key info (models endpoint may be publicly accessible)
         // but we still require authentication for consistency
+        $apiKey = $this->getAuthenticatedKey();
         $apiKeyId = (int) ($_SERVER['API_KEY_ID'] ?? 0);
         $userId = (int) ($_SERVER['API_USER_ID'] ?? 0);
         
@@ -648,12 +666,23 @@ class ApiProxyController extends BaseController
         }
         
         // Get mapped models from ProxyService
-        $models = $this->proxyService->getMappedModels();
+        $allModels = $this->proxyService->getMappedModels();
         $timestamp = time();
+        
+        // Filter models based on API key permissions
+        $allowedModels = $this->apiKeyModel->getAllowedModels($apiKey);
+        
+        // If allowedModels is null, all models are allowed
+        // Otherwise, filter to only allowed models
+        if ($allowedModels !== null) {
+            $allModels = array_filter($allModels, function($model) use ($allowedModels) {
+                return in_array($model, $allowedModels, true);
+            });
+        }
         
         // Build OpenAI-compatible response
         $data = [];
-        foreach ($models as $modelId) {
+        foreach ($allModels as $modelId) {
             $data[] = [
                 'id' => $modelId,
                 'object' => 'model',

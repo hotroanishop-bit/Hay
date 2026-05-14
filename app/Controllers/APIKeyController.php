@@ -10,6 +10,8 @@ class APIKeyController extends BaseController
     private APIService $apiService;
     private AuditService $auditService;
     private ApiKey $apiKeyModel;
+    private ProxyService $proxyService;
+    private IPWhitelistService $ipWhitelistService;
 
     public function __construct()
     {
@@ -22,6 +24,8 @@ class APIKeyController extends BaseController
         
         $this->apiService = new APIService($this->apiKeyModel, $usageLogModel);
         $this->auditService = new AuditService();
+        $this->proxyService = new ProxyService();
+        $this->ipWhitelistService = new IPWhitelistService();
     }
 
     /**
@@ -61,12 +65,14 @@ class APIKeyController extends BaseController
         }
 
         $providers = $this->apiService->listProviders();
+        $availableModels = $this->proxyService->getMappedModels();
 
         $this->currentPage = 'keys';
         $this->render('keys/create', [
             'pageTitle' => 'Create API Key',
             'currentPage' => $this->currentPage,
-            'providers' => $providers
+            'providers' => $providers,
+            'availableModels' => $availableModels
         ], ['keys'], ['keys']);
     }
 
@@ -88,6 +94,24 @@ class APIKeyController extends BaseController
         $rateLimit = isset($_POST['rate_limit']) ? (int)$_POST['rate_limit'] : null;
         $usageLimit = isset($_POST['usage_limit']) ? (int)$_POST['usage_limit'] : null;
         $expiresAt = $_POST['expires_at'] ?? null;
+        
+        // Handle allowed_models - array of selected models
+        $allowedModels = $_POST['allowed_models'] ?? [];
+        if (!is_array($allowedModels)) {
+            $allowedModels = [];
+        }
+        // Filter to only valid models
+        $validModels = $this->proxyService->getMappedModels();
+        $allowedModels = array_filter($allowedModels, function($m) use ($validModels) {
+            return in_array($m, $validModels, true);
+        });
+        
+        // Handle allowed_ips - parse from textarea
+        $allowedIpsRaw = trim($_POST['allowed_ips'] ?? '');
+        $allowedIps = [];
+        if (!empty($allowedIpsRaw)) {
+            $allowedIps = $this->ipWhitelistService->parseIPList($allowedIpsRaw);
+        }
 
         // Basic validation
         if (empty($name)) {
@@ -103,12 +127,16 @@ class APIKeyController extends BaseController
                 'model' => $model,
                 'rate_limit' => $rateLimit,
                 'usage_limit' => $usageLimit,
-                'expires_at' => $expiresAt
+                'expires_at' => $expiresAt,
+                'allowed_models' => !empty($allowedModels) ? $allowedModels : null,
+                'allowed_ips' => !empty($allowedIps) ? $allowedIps : null
             ]);
 
             $this->auditService->log($user['id'], 'api_key_created', [
                 'key_id' => $result['id'],
-                'name' => $name
+                'name' => $name,
+                'allowed_models' => $allowedModels,
+                'allowed_ips' => $allowedIps
             ]);
 
             // Store the plain key temporarily for display
@@ -145,13 +173,21 @@ class APIKeyController extends BaseController
 
         // Get key statistics
         $stats = $this->apiService->getKeyStats($id);
+        
+        // Get allowed models and IPs for display
+        $allowedModels = $this->apiKeyModel->getAllowedModels($apiKey);
+        $allowedIPs = $this->apiKeyModel->getAllowedIPs($apiKey);
+        $availableModels = $this->proxyService->getMappedModels();
 
         $this->currentPage = 'keys';
         $this->render('keys/show', [
             'pageTitle' => 'API Key Details',
             'currentPage' => $this->currentPage,
             'apiKey' => $apiKey,
-            'stats' => $stats
+            'stats' => $stats,
+            'allowedModels' => $allowedModels,
+            'allowedIPs' => $allowedIPs,
+            'availableModels' => $availableModels
         ], ['keys'], ['keys']);
     }
 

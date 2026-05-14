@@ -8,10 +8,12 @@
 class ApiAuthMiddleware
 {
     private ApiKey $apiKeyModel;
+    private IPWhitelistService $ipWhitelistService;
 
     public function __construct()
     {
         $this->apiKeyModel = new ApiKey();
+        $this->ipWhitelistService = new IPWhitelistService();
     }
 
     /**
@@ -58,12 +60,45 @@ class ApiAuthMiddleware
             return false;
         }
 
+        // Check IP whitelist
+        $requestIP = $this->getClientIP();
+        if (!$this->apiKeyModel->isIPAllowed($apiKey, $requestIP)) {
+            $this->forbidden("Access denied from this IP address");
+            return false;
+        }
+
         // Store validated key data in $_SERVER for use by controllers
         $_SERVER['API_KEY'] = $apiKey;
         $_SERVER['API_KEY_ID'] = $apiKey['id'];
         $_SERVER['API_USER_ID'] = $apiKey['user_id'];
 
         return true;
+    }
+
+    /**
+     * Get client IP address
+     * Handles various proxy configurations
+     *
+     * @return string Client IP address
+     */
+    private function getClientIP(): string
+    {
+        // Check for forwarded IP (behind proxy/load balancer)
+        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            // X-Forwarded-For can contain multiple IPs, get the first one (client IP)
+            $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+            return trim($ips[0]);
+        }
+        
+        if (!empty($_SERVER['HTTP_X_REAL_IP'])) {
+            return $_SERVER['HTTP_X_REAL_IP'];
+        }
+        
+        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+            return $_SERVER['HTTP_CLIENT_IP'];
+        }
+        
+        return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
     }
 
     /**
@@ -115,6 +150,23 @@ class ApiAuthMiddleware
                 'message' => $message,
                 'type' => 'authentication_error',
                 'code' => null
+            ]
+        ], JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Send 403 Forbidden JSON response
+     *
+     * @param string $message Error message
+     */
+    private function forbidden(string $message): void
+    {
+        http_response_code(403);
+        echo json_encode([
+            'error' => [
+                'message' => $message,
+                'type' => 'permission_error',
+                'code' => 'ip_not_allowed'
             ]
         ], JSON_UNESCAPED_UNICODE);
     }

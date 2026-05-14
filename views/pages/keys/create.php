@@ -67,6 +67,49 @@
                     </div>
 
                     <div class="form-section">
+                        <h3 class="form-section-title">Model Permissions</h3>
+                        <p class="form-help" style="margin-bottom: var(--space-4);">Select which models this API key can access. Leave all unchecked to allow all models.</p>
+                        
+                        <div class="model-checkboxes">
+                            <?php foreach ($availableModels ?? [] as $modelName): ?>
+                            <label class="checkbox-card">
+                                <input type="checkbox" name="allowed_models[]" value="<?= htmlspecialchars($modelName) ?>">
+                                <span class="checkbox-card-content">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                                    <span class="model-name"><?= htmlspecialchars($modelName) ?></span>
+                                </span>
+                                <span class="checkbox-indicator">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                </span>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
+                        
+                        <div class="model-selection-actions">
+                            <button type="button" class="btn btn-ghost btn-sm" onclick="selectAllModels()">Select All</button>
+                            <button type="button" class="btn btn-ghost btn-sm" onclick="deselectAllModels()">Deselect All</button>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">IP Whitelist</h3>
+                        
+                        <div class="form-group">
+                            <label for="allowed_ips" class="form-label">Allowed IP Addresses</label>
+                            <textarea id="allowed_ips" name="allowed_ips" class="form-input form-textarea" rows="4" placeholder="192.168.1.100&#10;10.0.0.*&#10;172.16.0.0/16"></textarea>
+                            <p class="form-help">Enter one IP address per line. Leave empty to allow all IPs.</p>
+                            <div class="ip-help-text">
+                                <strong>Supported formats:</strong>
+                                <ul>
+                                    <li>Exact IP: <code>192.168.1.100</code></li>
+                                    <li>Wildcard: <code>192.168.1.*</code> or <code>10.*.*.*</code></li>
+                                    <li>CIDR: <code>192.168.0.0/24</code></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
                         <h3 class="form-section-title">Rate Limits</h3>
                         
                         <div class="form-row">
@@ -294,6 +337,125 @@
     border-top: 1px solid var(--border-color);
 }
 
+/* Model Checkboxes */
+.model-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--space-3);
+}
+
+.checkbox-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background: var(--bg-primary);
+}
+
+.checkbox-card:hover {
+    border-color: var(--color-primary);
+    background: var(--bg-secondary);
+}
+
+.checkbox-card input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.checkbox-card input[type="checkbox"]:checked + .checkbox-card-content + .checkbox-indicator {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.checkbox-card input[type="checkbox"]:checked + .checkbox-card-content + .checkbox-indicator svg {
+    opacity: 1;
+}
+
+.checkbox-card-content {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text-primary);
+}
+
+.checkbox-card-content svg {
+    color: var(--text-muted);
+}
+
+.model-name {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+}
+
+.checkbox-indicator {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.checkbox-indicator svg {
+    color: white;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.model-selection-actions {
+    display: flex;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+}
+
+/* IP Whitelist */
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+}
+
+.ip-help-text {
+    margin-top: var(--space-3);
+    padding: var(--space-3);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.ip-help-text strong {
+    display: block;
+    margin-bottom: var(--space-2);
+    color: var(--text-primary);
+}
+
+.ip-help-text ul {
+    margin: 0;
+    padding-left: var(--space-4);
+}
+
+.ip-help-text li {
+    margin-bottom: var(--space-1);
+}
+
+.ip-help-text code {
+    background: var(--bg-secondary);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+}
+
 /* Tips List */
 .tips-list {
     display: flex;
@@ -338,6 +500,10 @@
         grid-template-columns: 1fr;
     }
     
+    .model-checkboxes {
+        grid-template-columns: 1fr;
+    }
+    
     .form-actions {
         flex-direction: column;
     }
@@ -363,6 +529,18 @@ function setExpiry(days) {
         date.setDate(date.getDate() + days);
         input.value = date.toISOString().split('T')[0];
     }
+}
+
+function selectAllModels() {
+    document.querySelectorAll('.model-checkboxes input[type="checkbox"]').forEach(cb => {
+        cb.checked = true;
+    });
+}
+
+function deselectAllModels() {
+    document.querySelectorAll('.model-checkboxes input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+    });
 }
 
 // Form submission with loading state
