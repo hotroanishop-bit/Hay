@@ -15,6 +15,9 @@ class AdminController extends BaseController
     private Plan $planModel;
     private Provider $providerModel;
     private ModelPricing $modelPricingModel;
+    private Deposit $depositModel;
+    private AuditLog $auditLogModel;
+    private UsageLog $usageLogModel;
 
     public function __construct()
     {
@@ -29,6 +32,9 @@ class AdminController extends BaseController
         $this->planModel = new Plan();
         $this->providerModel = new Provider();
         $this->modelPricingModel = new ModelPricing();
+        $this->depositModel = new Deposit();
+        $this->auditLogModel = new AuditLog();
+        $this->usageLogModel = new UsageLog();
     }
 
     /**
@@ -53,6 +59,767 @@ class AdminController extends BaseController
     }
 
     /**
+     * Get client IP address
+     */
+    private function getClientIP(): string
+    {
+        $headers = [
+            'HTTP_CF_CONNECTING_IP',
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_X_REAL_IP',
+            'REMOTE_ADDR',
+        ];
+
+        foreach ($headers as $header) {
+            if (!empty($_SERVER[$header])) {
+                $ip = $_SERVER[$header];
+                if (strpos($ip, ',') !== false) {
+                    $ip = trim(explode(',', $ip)[0]);
+                }
+                if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                    return $ip;
+                }
+            }
+        }
+
+        return 'unknown';
+    }
+
+    // =====================
+    // Dashboard
+    // =====================
+
+    /**
+     * Admin Dashboard with stats and charts
+     */
+    public function dashboard(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        // Get total users count
+        $totalUsers = $this->userModel->count([]);
+        
+        // Get active users today (users with usage_logs today)
+        $today = date('Y-m-d');
+        $sql = "SELECT COUNT(DISTINCT user_id) as active_count FROM usage_logs WHERE DATE(created_at) = :today";
+        $activeResult = $this->usageLogModel->query($sql, ['today' => $today]);
+        $activeUsersToday = (int) ($activeResult[0]['active_count'] ?? 0);
+        
+        // Get total revenue (sum of approved deposits)
+        $sql = "SELECT COALESCE(SUM(amount), 0) as total FROM deposits WHERE status = 'approved'";
+        $revenueResult = $this->depositModel->query($sql, []);
+        $totalRevenue = (float) ($revenueResult[0]['total'] ?? 0);
+        
+        // Get total API calls today
+        $sql = "SELECT COUNT(*) as total FROM usage_logs WHERE DATE(created_at) = :today";
+        $apiResult = $this->usageLogModel->query($sql, ['today' => $today]);
+        $apiCallsToday = (int) ($apiResult[0]['total'] ?? 0);
+        
+        // Get pending deposits count
+        $sql = "SELECT COUNT(*) as total FROM deposits WHERE status = 'pending'";
+        $pendingDepositsResult = $this->depositModel->query($sql, []);
+        $pendingDeposits = (int) ($pendingDepositsResult[0]['total'] ?? 0);
+        
+        // Get pending tickets count (open tickets)
+        $sql = "SELECT COUNT(*) as total FROM tickets WHERE status = 'open'";
+        $pendingTicketsResult = $this->ticketModel->query($sql, []);
+        $pendingTickets = (int) ($pendingTicketsResult[0]['total'] ?? 0);
+        
+        // Get revenue last 7 days (for chart)
+        $revenueLast7Days = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = date('Y-m-d', strtotime("-{$i} days"));
+            $sql = "SELECT COALESCE(SUM(amount), 0) as total FROM deposits WHERE status = 'approved' AND DATE(processed_at) = :date";
+            $result = $this->depositModel->query($sql, ['date' => $date]);
+            $revenueLast7Days[] = [
+                'date' => $date,
+                'label' => date('M d', strtotime($date)),
+                'amount' => (float) ($result[0]['total'] ?? 0)
+            ];
+        }
+        
+        // Get signups last 7 days (for chart)
+        $signupsLast7Days = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = date('Y-m-d', strtotime("-{$i} days"));
+            $sql = "SELECT COUNT(*) as total FROM users WHERE DATE(created_at) = :date";
+            $result = $this->userModel->query($sql, ['date' => $date]);
+            $signupsLast7Days[] = [
+                'date' => $date,
+                'label' => date('M d', strtotime($date)),
+                'count' => (int) ($result[0]['total'] ?? 0)
+            ];
+        }
+        
+        // Get recent activity (last 10 audit logs)
+        $recentActivity = $this->auditLogModel->getRecent(10);
+
+        $this->currentPage = 'admin-dashboard';
+        $this->render('admin/dashboard', [
+            'pageTitle' => 'Admin Dashboard',
+            'currentPage' => $this->currentPage,
+            'totalUsers' => $totalUsers,
+            'activeUsersToday' => $activeUsersToday,
+            'totalRevenue' => $totalRevenue,
+            'apiCallsToday' => $apiCallsToday,
+            'pendingDeposits' => $pendingDeposits,
+            'pendingTickets' => $pendingTickets,
+            'revenueLast7Days' => $revenueLast7Days,
+            'signupsLast7Days' => $signupsLast7Days,
+            'recentActivity' => $recentActivity
+        ], ['admin_dashboard'], ['admin_dashboard']);
+    }
+
+    // =====================
+    // Deposit Management
+    // =====================
+
+    /**
+     * List all deposits with filtering
+     */
+    public function deposits(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $status = isset($_GET['status']) ? trim($_GET['status']) : null;
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $perPage = 20;
+        $offset = ($page - 1) * $perPage;
+
+        // Build query with optional status filter
+        $params = [];
+        $whereClause = '';
+        if ($status && in_array($status, ['pending', 'approved', 'rejected', 'expired'])) {
+            $whereClause = 'WHERE d.status = :status';
+            $params['status'] = $status;
+        }
+
+        // Get total count
+        $countSql = "SELECT COUNT(*) as total FROM deposits d {$whereClause}";
+        $countResult = $this->depositModel->query($countSql, $params);
+        $total = (int) ($countResult[0]['total'] ?? 0);
+
+        // Get deposits with user info
+        $sql = "SELECT d.*, u.name as user_name, u.email as user_email 
+                FROM deposits d 
+                LEFT JOIN users u ON d.user_id = u.id 
+                {$whereClause} 
+                ORDER BY d.created_at DESC 
+                LIMIT {$perPage} OFFSET {$offset}";
+        $deposits = $this->depositModel->query($sql, $params);
+
+        // Get counts by status for tabs
+        $statusCounts = $this->getDepositStatusCounts();
+
+        $this->currentPage = 'admin-deposits';
+        $this->render('admin/deposits', [
+            'pageTitle' => 'Admin - Deposits',
+            'currentPage' => $this->currentPage,
+            'deposits' => $deposits,
+            'statusFilter' => $status,
+            'statusCounts' => $statusCounts,
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => (int) ceil($total / $perPage),
+                'total' => $total,
+                'per_page' => $perPage
+            ]
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Get deposit counts by status
+     */
+    private function getDepositStatusCounts(): array
+    {
+        $sql = "SELECT status, COUNT(*) as count FROM deposits GROUP BY status";
+        $results = $this->depositModel->query($sql, []);
+        
+        $counts = [
+            'all' => 0,
+            'pending' => 0,
+            'approved' => 0,
+            'rejected' => 0,
+            'expired' => 0
+        ];
+        
+        foreach ($results as $row) {
+            $counts[$row['status']] = (int) $row['count'];
+            $counts['all'] += (int) $row['count'];
+        }
+        
+        return $counts;
+    }
+
+    /**
+     * Show deposit detail
+     */
+    public function depositDetail(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        // Get deposit with user info
+        $sql = "SELECT d.*, u.name as user_name, u.email as user_email, u.balance as user_balance 
+                FROM deposits d 
+                LEFT JOIN users u ON d.user_id = u.id 
+                WHERE d.id = :id";
+        $results = $this->depositModel->query($sql, ['id' => $id]);
+        $deposit = $results[0] ?? null;
+
+        if (!$deposit) {
+            $this->setFlash('error', 'Deposit not found');
+            $this->redirect('/admin/deposits');
+            return;
+        }
+
+        // Get audit history for this deposit
+        $auditHistory = $this->auditLogModel->getByTarget('deposit', $id);
+
+        $this->currentPage = 'admin-deposits';
+        $this->render('admin/deposit_detail', [
+            'pageTitle' => 'Admin - Deposit Detail',
+            'currentPage' => $this->currentPage,
+            'deposit' => $deposit,
+            'auditHistory' => $auditHistory
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Approve a deposit
+     */
+    public function approveDeposit(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $deposit = $this->depositModel->find($id);
+
+        if (!$deposit) {
+            $this->setFlash('error', 'Deposit not found');
+            $this->redirect('/admin/deposits');
+            return;
+        }
+
+        if ($deposit['status'] !== 'pending') {
+            $this->setFlash('error', 'Only pending deposits can be approved');
+            $this->redirect('/admin/deposits/' . $id);
+            return;
+        }
+
+        // Update deposit status
+        $this->depositModel->updateStatus($id, 'approved', $admin['id']);
+
+        // Add amount to user's balance
+        $this->userModel->updateBalance($deposit['user_id'], $deposit['amount']);
+
+        // Create transaction record
+        $this->transactionModel->createCredit(
+            $deposit['user_id'],
+            $deposit['amount'],
+            'Deposit approved - Ref: ' . $deposit['reference_code'],
+            ['reference_id' => $deposit['reference_code'], 'payment_method' => 'bank_transfer']
+        );
+
+        // Log audit action
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'deposit_approved',
+            'deposit',
+            $id,
+            ['status' => 'pending'],
+            ['status' => 'approved', 'amount' => $deposit['amount']],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Deposit approved. $' . number_format($deposit['amount'], 2) . ' added to user balance.');
+        $this->redirect('/admin/deposits/' . $id);
+    }
+
+    /**
+     * Reject a deposit
+     */
+    public function rejectDeposit(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $deposit = $this->depositModel->find($id);
+        $reason = trim($_POST['reason'] ?? '');
+
+        if (!$deposit) {
+            $this->setFlash('error', 'Deposit not found');
+            $this->redirect('/admin/deposits');
+            return;
+        }
+
+        if ($deposit['status'] !== 'pending') {
+            $this->setFlash('error', 'Only pending deposits can be rejected');
+            $this->redirect('/admin/deposits/' . $id);
+            return;
+        }
+
+        // Update deposit status
+        $this->depositModel->updateStatus($id, 'rejected', $admin['id']);
+
+        // Log audit action with reason
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'deposit_rejected',
+            'deposit',
+            $id,
+            ['status' => 'pending'],
+            ['status' => 'rejected', 'reason' => $reason],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Deposit rejected.');
+        $this->redirect('/admin/deposits/' . $id);
+    }
+
+    // =====================
+    // Ticket Management
+    // =====================
+
+    /**
+     * List all tickets with filtering
+     */
+    public function tickets(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $status = isset($_GET['status']) ? trim($_GET['status']) : null;
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $perPage = 20;
+        $offset = ($page - 1) * $perPage;
+
+        // Build query with optional status filter
+        $params = [];
+        $whereClause = '';
+        if ($status && in_array($status, ['open', 'pending', 'closed'])) {
+            $whereClause = 'WHERE t.status = :status';
+            $params['status'] = $status;
+        }
+
+        // Get total count
+        $countSql = "SELECT COUNT(*) as total FROM tickets t {$whereClause}";
+        $countResult = $this->ticketModel->query($countSql, $params);
+        $total = (int) ($countResult[0]['total'] ?? 0);
+
+        // Get tickets with user info
+        $sql = "SELECT t.*, u.name as user_name, u.email as user_email 
+                FROM tickets t 
+                LEFT JOIN users u ON t.user_id = u.id 
+                {$whereClause} 
+                ORDER BY 
+                    CASE t.status 
+                        WHEN 'open' THEN 1 
+                        WHEN 'pending' THEN 2 
+                        WHEN 'closed' THEN 3 
+                    END,
+                    CASE t.priority 
+                        WHEN 'high' THEN 1 
+                        WHEN 'medium' THEN 2 
+                        WHEN 'low' THEN 3 
+                    END,
+                    t.created_at DESC 
+                LIMIT {$perPage} OFFSET {$offset}";
+        $tickets = $this->ticketModel->query($sql, $params);
+
+        // Get counts by status for tabs
+        $statusCounts = $this->ticketModel->getAllStatusCounts();
+
+        $this->currentPage = 'admin-tickets';
+        $this->render('admin/tickets', [
+            'pageTitle' => 'Admin - Tickets',
+            'currentPage' => $this->currentPage,
+            'tickets' => $tickets,
+            'statusFilter' => $status,
+            'statusCounts' => $statusCounts,
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => (int) ceil($total / $perPage),
+                'total' => $total,
+                'per_page' => $perPage
+            ]
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Show ticket detail
+     */
+    public function ticketDetail(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        // Get ticket with user info
+        $sql = "SELECT t.*, u.name as user_name, u.email as user_email, u.avatar_url as user_avatar 
+                FROM tickets t 
+                LEFT JOIN users u ON t.user_id = u.id 
+                WHERE t.id = :id";
+        $results = $this->ticketModel->query($sql, ['id' => $id]);
+        $ticket = $results[0] ?? null;
+
+        if (!$ticket) {
+            $this->setFlash('error', 'Ticket not found');
+            $this->redirect('/admin/tickets');
+            return;
+        }
+
+        $this->currentPage = 'admin-tickets';
+        $this->render('admin/ticket_detail', [
+            'pageTitle' => 'Admin - Ticket #' . $id,
+            'currentPage' => $this->currentPage,
+            'ticket' => $ticket
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Reply to a ticket
+     */
+    public function replyTicket(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $ticket = $this->ticketModel->find($id);
+        $reply = trim($_POST['reply'] ?? '');
+
+        if (!$ticket) {
+            $this->setFlash('error', 'Ticket not found');
+            $this->redirect('/admin/tickets');
+            return;
+        }
+
+        if (empty($reply)) {
+            $this->setFlash('error', 'Reply cannot be empty');
+            $this->redirect('/admin/tickets/' . $id);
+            return;
+        }
+
+        // Add admin reply
+        $this->ticketModel->addReply($id, $reply);
+
+        // Log audit action
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'ticket_replied',
+            'ticket',
+            $id,
+            null,
+            ['reply_length' => strlen($reply)],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Reply sent successfully.');
+        $this->redirect('/admin/tickets/' . $id);
+    }
+
+    /**
+     * Close a ticket
+     */
+    public function closeTicket(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $ticket = $this->ticketModel->find($id);
+
+        if (!$ticket) {
+            $this->setFlash('error', 'Ticket not found');
+            $this->redirect('/admin/tickets');
+            return;
+        }
+
+        // Close the ticket
+        $this->ticketModel->close($id);
+
+        // Log audit action
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'ticket_closed',
+            'ticket',
+            $id,
+            ['status' => $ticket['status']],
+            ['status' => 'closed'],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Ticket closed.');
+        $this->redirect('/admin/tickets/' . $id);
+    }
+
+    // =====================
+    // User Management Enhancements
+    // =====================
+
+    /**
+     * Ban a user
+     */
+    public function banUser(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $user = $this->userModel->find($id);
+        $reason = trim($_POST['reason'] ?? '');
+
+        if (!$user) {
+            $this->setFlash('error', 'User not found');
+            $this->redirect('/admin/users');
+            return;
+        }
+
+        if ($user['is_admin']) {
+            $this->setFlash('error', 'Cannot ban an admin user');
+            $this->redirect('/admin/users/' . $id);
+            return;
+        }
+
+        // Ban the user
+        $this->userModel->ban($id);
+
+        // Log audit action with reason
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'user_banned',
+            'user',
+            $id,
+            ['is_banned' => false],
+            ['is_banned' => true, 'reason' => $reason],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'User has been banned.');
+        $this->redirect('/admin/users/' . $id);
+    }
+
+    /**
+     * Unban a user
+     */
+    public function unbanUser(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $user = $this->userModel->find($id);
+
+        if (!$user) {
+            $this->setFlash('error', 'User not found');
+            $this->redirect('/admin/users');
+            return;
+        }
+
+        // Unban the user
+        $this->userModel->unban($id);
+
+        // Log audit action
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'user_unbanned',
+            'user',
+            $id,
+            ['is_banned' => true],
+            ['is_banned' => false],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'User has been unbanned.');
+        $this->redirect('/admin/users/' . $id);
+    }
+
+    /**
+     * Update user balance manually
+     */
+    public function updateUserBalance(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $user = $this->userModel->find($id);
+        $amount = (float) ($_POST['amount'] ?? 0);
+
+        if (!$user) {
+            $this->setFlash('error', 'User not found');
+            $this->redirect('/admin/users');
+            return;
+        }
+
+        if ($amount == 0) {
+            $this->setFlash('error', 'Amount cannot be zero');
+            $this->redirect('/admin/users/' . $id);
+            return;
+        }
+
+        $oldBalance = (float) $user['balance'];
+        $newBalance = $oldBalance + $amount;
+
+        // Update balance
+        $this->userModel->updateBalance($id, $amount);
+
+        // Create transaction record
+        if ($amount > 0) {
+            $this->transactionModel->createCredit(
+                $id,
+                $amount,
+                'Manual balance adjustment by admin',
+                ['payment_method' => 'admin_adjustment']
+            );
+        } else {
+            $this->transactionModel->createDebit(
+                $id,
+                abs($amount),
+                'Manual balance deduction by admin',
+                ['payment_method' => 'admin_adjustment']
+            );
+        }
+
+        // Log audit action
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'user_balance_updated',
+            'user',
+            $id,
+            ['balance' => $oldBalance],
+            ['balance' => $newBalance, 'adjustment' => $amount],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'User balance updated. Old: $' . number_format($oldBalance, 2) . ' -> New: $' . number_format($newBalance, 2));
+        $this->redirect('/admin/users/' . $id);
+    }
+
+    /**
+     * Update user plan
+     */
+    public function updateUserPlan(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $user = $this->userModel->find($id);
+        $planId = (int) ($_POST['plan_id'] ?? 0);
+
+        if (!$user) {
+            $this->setFlash('error', 'User not found');
+            $this->redirect('/admin/users');
+            return;
+        }
+
+        $plan = null;
+        if ($planId > 0) {
+            $plan = $this->planModel->find($planId);
+            if (!$plan) {
+                $this->setFlash('error', 'Plan not found');
+                $this->redirect('/admin/users/' . $id);
+                return;
+            }
+        }
+
+        $oldPlanId = $user['plan_id'] ?? null;
+
+        // Update user's plan
+        $this->userModel->update($id, [
+            'plan_id' => $planId > 0 ? $planId : null,
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
+
+        // Log audit action
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'user_plan_updated',
+            'user',
+            $id,
+            ['plan_id' => $oldPlanId],
+            ['plan_id' => $planId > 0 ? $planId : null, 'plan_name' => $plan ? $plan['name'] : 'None'],
+            $this->getClientIP()
+        );
+
+        $planName = $plan ? $plan['name'] : 'None';
+        $this->setFlash('success', "User's plan updated to: {$planName}");
+        $this->redirect('/admin/users/' . $id);
+    }
+
+    // =====================
+    // Audit Logs
+    // =====================
+
+    /**
+     * Show audit logs
+     */
+    public function auditLogs(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $perPage = 50;
+
+        // Get filters
+        $filters = [
+            'admin_id' => isset($_GET['admin_id']) && $_GET['admin_id'] !== '' ? (int)$_GET['admin_id'] : null,
+            'action' => isset($_GET['action']) && $_GET['action'] !== '' ? trim($_GET['action']) : null,
+            'date_from' => isset($_GET['date_from']) && $_GET['date_from'] !== '' ? trim($_GET['date_from']) : null,
+            'date_to' => isset($_GET['date_to']) && $_GET['date_to'] !== '' ? trim($_GET['date_to']) : null,
+        ];
+
+        // Search audit logs with filters
+        $result = $this->auditLogModel->search($filters, $page, $perPage);
+
+        // Get list of admins for filter dropdown
+        $sql = "SELECT DISTINCT u.id, u.name FROM users u 
+                INNER JOIN audit_logs al ON u.id = al.admin_id 
+                ORDER BY u.name";
+        $admins = $this->userModel->query($sql, []);
+
+        // Get list of action types
+        $sql = "SELECT DISTINCT action FROM audit_logs ORDER BY action";
+        $actionTypes = $this->auditLogModel->query($sql, []);
+
+        $this->currentPage = 'admin-logs';
+        $this->render('admin/logs', [
+            'pageTitle' => 'Admin - Audit Logs',
+            'currentPage' => $this->currentPage,
+            'logs' => $result['data'],
+            'admins' => $admins,
+            'actionTypes' => array_column($actionTypes, 'action'),
+            'filters' => $filters,
+            'pagination' => [
+                'current_page' => $result['page'],
+                'total_pages' => $result['total_pages'],
+                'total' => $result['total'],
+                'per_page' => $result['per_page']
+            ]
+        ], ['admin'], ['admin']);
+    }
+
+    /**
      * Show admin dashboard with user list
      */
     public function users(): void
@@ -63,9 +830,11 @@ class AdminController extends BaseController
 
         $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
         $perPage = 20;
+        $search = isset($_GET['search']) ? trim($_GET['search']) : null;
 
-        $users = $this->userModel->getAllUsers($page, $perPage);
-        $totalUsers = $this->userModel->count([]);
+        $result = $this->userModel->getAllUsers($page, $perPage, $search);
+        $users = $result['data'] ?? [];
+        $totalUsers = $result['total'] ?? 0;
 
         // Get ticket counts for admin overview
         $ticketCounts = $this->ticketModel->getAllStatusCounts();
@@ -77,7 +846,7 @@ class AdminController extends BaseController
             'users' => $users,
             'pagination' => [
                 'current_page' => $page,
-                'total_pages' => ceil($totalUsers / $perPage),
+                'total_pages' => (int) ceil($totalUsers / $perPage),
                 'total' => $totalUsers,
                 'per_page' => $perPage
             ],

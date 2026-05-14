@@ -406,6 +406,20 @@ $routes = [
     // =====================
     [
         'method' => 'GET',
+        'path' => '/admin',
+        'controller' => AdminController::class,
+        'action' => 'dashboard',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/dashboard',
+        'controller' => AdminController::class,
+        'action' => 'dashboard',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
         'path' => '/admin/users',
         'controller' => AdminController::class,
         'action' => 'users',
@@ -416,6 +430,97 @@ $routes = [
         'path' => '/admin/users/{id}',
         'controller' => AdminController::class,
         'action' => 'userDetail',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/users/{id}/ban',
+        'controller' => AdminController::class,
+        'action' => 'banUser',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/users/{id}/unban',
+        'controller' => AdminController::class,
+        'action' => 'unbanUser',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/users/{id}/balance',
+        'controller' => AdminController::class,
+        'action' => 'updateUserBalance',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/users/{id}/plan',
+        'controller' => AdminController::class,
+        'action' => 'updateUserPlan',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/deposits',
+        'controller' => AdminController::class,
+        'action' => 'deposits',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/deposits/{id}',
+        'controller' => AdminController::class,
+        'action' => 'depositDetail',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/deposits/{id}/approve',
+        'controller' => AdminController::class,
+        'action' => 'approveDeposit',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/deposits/{id}/reject',
+        'controller' => AdminController::class,
+        'action' => 'rejectDeposit',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/tickets',
+        'controller' => AdminController::class,
+        'action' => 'tickets',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/tickets/{id}',
+        'controller' => AdminController::class,
+        'action' => 'ticketDetail',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/tickets/{id}/reply',
+        'controller' => AdminController::class,
+        'action' => 'replyTicket',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/tickets/{id}/close',
+        'controller' => AdminController::class,
+        'action' => 'closeTicket',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/logs',
+        'controller' => AdminController::class,
+        'action' => 'auditLogs',
         'middleware' => [AdminMiddleware::class]
     ],
     [
