@@ -1193,6 +1193,24 @@ $routes = [
         'action' => 'index',
         'middleware' => []
     ],
+
+    // =====================
+    // API Playground Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/playground',
+        'controller' => PlaygroundController::class,
+        'action' => 'index',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/playground/execute',
+        'controller' => PlaygroundController::class,
+        'action' => 'execute',
+        'middleware' => [AuthMiddleware::class]
+    ],
 ];
 
 return $routes;
