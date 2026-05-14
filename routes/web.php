@@ -1574,6 +1574,142 @@ $routes = [
         'action' => 'toggle',
         'middleware' => [AuthMiddleware::class]
     ],
+
+    // =====================
+    // Gift Code Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/giftcode',
+        'controller' => GiftCodeController::class,
+        'action' => 'index',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/giftcode/redeem',
+        'controller' => GiftCodeController::class,
+        'action' => 'redeem',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/giftcode/history',
+        'controller' => GiftCodeController::class,
+        'action' => 'history',
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    // =====================
+    // Admin Gift Code Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/giftcodes',
+        'controller' => AdminGiftCodeController::class,
+        'action' => 'index',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/giftcodes/create',
+        'controller' => AdminGiftCodeController::class,
+        'action' => 'create',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/giftcodes/store',
+        'controller' => AdminGiftCodeController::class,
+        'action' => 'store',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/giftcodes/generate-bulk',
+        'controller' => AdminGiftCodeController::class,
+        'action' => 'generateBulk',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/giftcodes/{id}',
+        'controller' => AdminGiftCodeController::class,
+        'action' => 'show',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/giftcodes/{id}/toggle',
+        'controller' => AdminGiftCodeController::class,
+        'action' => 'toggle',
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    // =====================
+    // Daily Check-in Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/checkin',
+        'controller' => CheckinController::class,
+        'action' => 'index',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/checkin',
+        'controller' => CheckinController::class,
+        'action' => 'checkin',
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    // =====================
+    // Achievement Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/achievements',
+        'controller' => AchievementController::class,
+        'action' => 'index',
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    // =====================
+    // Favorites Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/favorites',
+        'controller' => FavoriteController::class,
+        'action' => 'index',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/favorites/toggle',
+        'controller' => FavoriteController::class,
+        'action' => 'toggle',
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    // =====================
+    // Usage Alerts Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/settings/alerts',
+        'controller' => AlertController::class,
+        'action' => 'index',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/settings/alerts',
+        'controller' => AlertController::class,
+        'action' => 'save',
+        'middleware' => [AuthMiddleware::class]
+    ],
 ];
 
 return $routes;
