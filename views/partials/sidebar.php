@@ -30,7 +30,7 @@
             </li>
             
             <li class="nav-item">
-                <a href="/billing" class="nav-link <?php echo (strpos($currentPage, 'billing') === 0 || $currentPage === 'deposit') ? 'active' : ''; ?>">
+                <a href="/billing" class="nav-link <?php echo (strpos($currentPage, 'billing') === 0 && $currentPage !== 'billing-auto-topup' || $currentPage === 'deposit') ? 'active' : ''; ?>">
                     <span class="nav-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
@@ -38,6 +38,18 @@
                         </svg>
                     </span>
                     <span class="nav-text"><?php echo __('nav.billing', 'Billing'); ?></span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="/billing/auto-topup" class="nav-link <?php echo ($currentPage === 'billing-auto-topup') ? 'active' : ''; ?>">
+                    <span class="nav-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                    </span>
+                    <span class="nav-text"><?php echo __('nav.auto_topup', 'Auto Top-Up'); ?></span>
                 </a>
             </li>
             
@@ -90,7 +102,7 @@
             </li>
             
             <li class="nav-item">
-                <a href="/profile" class="nav-link <?php echo (strpos($currentPage, 'profile') === 0) ? 'active' : ''; ?>">
+                <a href="/profile" class="nav-link <?php echo (strpos($currentPage, 'profile') === 0 && $currentPage !== 'profile-telegram') ? 'active' : ''; ?>">
                     <span class="nav-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -98,6 +110,17 @@
                         </svg>
                     </span>
                     <span class="nav-text"><?php echo __('nav.profile', 'Profile'); ?></span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="/profile/telegram" class="nav-link <?php echo ($currentPage === 'profile-telegram') ? 'active' : ''; ?>">
+                    <span class="nav-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                        </svg>
+                    </span>
+                    <span class="nav-text"><?php echo __('nav.telegram', 'Telegram'); ?></span>
                 </a>
             </li>
             
@@ -310,6 +333,17 @@
                         </svg>
                     </span>
                     <span class="nav-text"><?php echo __('nav.health', 'System Health'); ?></span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="/admin/maintenance" class="nav-link <?php echo ($currentPage === 'admin-maintenance') ? 'active' : ''; ?>">
+                    <span class="nav-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                        </svg>
+                    </span>
+                    <span class="nav-text"><?php echo __('nav.maintenance', 'Maintenance'); ?></span>
                 </a>
             </li>
             <?php endif; ?>

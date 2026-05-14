@@ -667,3 +667,47 @@
     font-size: var(--font-size-sm);
     color: var(--color-gray-500);
 }
+
+
+/* ================================
+   MAINTENANCE WARNING BANNER
+   ================================ */
+.maintenance-warning-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-4);
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+    color: white;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    text-align: center;
+}
+
+.maintenance-warning-banner svg {
+    flex-shrink: 0;
+}
+
+.maintenance-warning-banner + .topbar-left {
+    margin-top: 36px;
+}
+
+/* Adjust header when maintenance banner is present */
+.topbar:has(.maintenance-warning-banner) .topbar-left,
+.topbar:has(.maintenance-warning-banner) .topbar-right {
+    margin-top: 36px;
+}
+
+/* Fallback for browsers without :has support */
+@supports not selector(:has(*)) {
+    .maintenance-warning-banner ~ .topbar-left {
+        margin-top: 36px;
+    }
+}
+

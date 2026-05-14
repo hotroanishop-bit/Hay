@@ -2,6 +2,7 @@
 /**
  * Maintenance Middleware
  * Blocks access for non-admin users when maintenance mode is enabled
+ * Supports both manual maintenance mode and scheduled maintenance windows
  */
 
 class MaintenanceMiddleware
@@ -22,12 +23,17 @@ class MaintenanceMiddleware
      */
     public function handle(?callable $next = null): mixed
     {
-        // Check maintenance mode setting
         $settingsService = new SettingsService();
-        $maintenanceMode = $settingsService->get('maintenance_mode', '0');
+        
+        // Check for scheduled maintenance first
+        $scheduledMaintenance = $this->checkScheduledMaintenance();
+        
+        // Then check manual maintenance mode setting
+        $manualMaintenanceMode = $settingsService->get('maintenance_mode', '0');
+        $isManualMaintenance = ($manualMaintenanceMode === '1' || $manualMaintenanceMode === true || $manualMaintenanceMode === 1);
 
-        // If maintenance mode is disabled, allow through
-        if ($maintenanceMode !== '1' && $maintenanceMode !== true && $maintenanceMode !== 1) {
+        // If no maintenance is active, allow through
+        if (!$scheduledMaintenance && !$isManualMaintenance) {
             if ($next !== null) {
                 return $next();
             }
@@ -46,21 +52,47 @@ class MaintenanceMiddleware
         }
 
         // Block non-admin users and show maintenance page
-        $this->showMaintenancePage($settingsService);
+        $this->showMaintenancePage($settingsService, $scheduledMaintenance);
         return false;
+    }
+
+    /**
+     * Check for active scheduled maintenance
+     */
+    private function checkScheduledMaintenance(): ?array
+    {
+        try {
+            $maintenanceModel = new ScheduledMaintenance();
+            return $maintenanceModel->getActive();
+        } catch (Exception $e) {
+            // If table doesn't exist or query fails, return null
+            return null;
+        }
     }
 
     /**
      * Display the maintenance page
      */
-    private function showMaintenancePage(SettingsService $settingsService): void
+    private function showMaintenancePage(SettingsService $settingsService, ?array $scheduledMaintenance = null): void
     {
         http_response_code(503);
         header('Content-Type: text/html; charset=UTF-8');
         header('Retry-After: 3600');
 
-        // Get site name and maintenance message from settings
+        // Get site name from settings
         $siteName = $settingsService->get('site_name', 'Hay API Keys');
+
+        // If we have scheduled maintenance data, use the custom maintenance page
+        if ($scheduledMaintenance) {
+            $maintenance = $scheduledMaintenance;
+            $viewPath = VIEWS_PATH . '/pages/maintenance.php';
+            if (file_exists($viewPath)) {
+                include $viewPath;
+                exit;
+            }
+        }
+
+        // Get maintenance message from settings for manual mode
         $maintenanceMessage = $settingsService->get('maintenance_message', 'We are currently performing scheduled maintenance. Please check back soon.');
 
         // Include the maintenance view

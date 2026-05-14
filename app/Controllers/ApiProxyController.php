@@ -729,8 +729,38 @@ class ApiProxyController extends BaseController
                 'ip_address' => $_SERVER['REMOTE_ADDR'] ?? '',
                 'response_code' => http_response_code(),
             ]);
+            
+            // Check auto top-up after PAYG deduction
+            if ($billingType === 'payg' && $cost > 0) {
+                $this->checkAutoTopup($userId);
+            }
         } catch (Exception $e) {
             error_log('Usage logging failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Check and trigger auto top-up if needed
+     */
+    private function checkAutoTopup(int $userId): void
+    {
+        try {
+            // Get current user balance
+            $userModel = new User();
+            $user = $userModel->find($userId);
+            
+            if (!$user) {
+                return;
+            }
+            
+            $currentBalance = (float) ($user['balance'] ?? 0);
+            
+            // Check and trigger auto top-up
+            $autoTopupService = new AutoTopupService();
+            $autoTopupService->checkAndTrigger($userId, $currentBalance);
+        } catch (Exception $e) {
+            // Don't fail the request if auto top-up check fails
+            error_log('Auto top-up check failed: ' . $e->getMessage());
         }
     }
 

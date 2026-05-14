@@ -1,0 +1,85 @@
+/**
+ * Telegram Integration Page Styles
+ */
+
+.telegram-status {
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+.telegram-status .status-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin-bottom: 1.5rem;
+}
+
+.telegram-linked .status-icon {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--color-success, #22c55e);
+}
+
+.telegram-not-linked .status-icon {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.telegram-status h4 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.telegram-status p {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.notification-types-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.notification-types-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--color-gray-200, #e5e7eb);
+}
+
+.notification-types-list li:last-child {
+    border-bottom: none;
+}
+
+.notification-icon {
+    font-size: 1.25rem;
+    width: 28px;
+    text-align: center;
+}
+
+#linkResult .alert {
+    text-align: left;
+}
+
+#linkResult .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Telegram brand color button */
+.btn-telegram {
+    background-color: #0088cc;
+    border-color: #0088cc;
+    color: white;
+}
+
+.btn-telegram:hover {
+    background-color: #006699;
+    border-color: #006699;
+    color: white;
+}

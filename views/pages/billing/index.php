@@ -329,6 +329,17 @@ if (!empty($balances['plan_tokens_expires_at'])) {
         <!-- Help Card -->
         <div class="card mt-4">
             <div class="card-header">
+                <h3>Auto Top-Up</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Never run out of credits. Set up automatic deposit requests when your balance is low.</p>
+                <a href="/billing/auto-topup" class="btn btn-secondary btn-block">Configure Auto Top-Up</a>
+            </div>
+        </div>
+
+        <!-- Support Card -->
+        <div class="card mt-4">
+            <div class="card-header">
                 <h3>Need Help?</h3>
             </div>
             <div class="card-body">

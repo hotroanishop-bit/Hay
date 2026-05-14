@@ -4016,4 +4016,278 @@ class AdminController extends BaseController
         $this->setFlash('success', 'Role deleted successfully.');
         $this->redirect('/admin/roles');
     }
+
+    // =====================
+    // Scheduled Maintenance Management
+    // =====================
+
+    /**
+     * List scheduled maintenance windows
+     */
+    public function scheduledMaintenance(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $maintenanceModel = new ScheduledMaintenance();
+        $maintenanceWindows = $maintenanceModel->getAll($page, 20);
+
+        $this->currentPage = 'admin-maintenance';
+        $this->render('admin/maintenance', [
+            'pageTitle' => 'Admin - Scheduled Maintenance',
+            'currentPage' => $this->currentPage,
+            'maintenanceWindows' => $maintenanceWindows,
+            'flash' => $_SESSION['flash'] ?? null
+        ], ['admin'], ['admin']);
+
+        unset($_SESSION['flash']);
+    }
+
+    /**
+     * Show create maintenance form
+     */
+    public function createMaintenance(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $this->currentPage = 'admin-maintenance';
+        $this->render('admin/maintenance_form', [
+            'pageTitle' => 'Admin - Schedule Maintenance',
+            'currentPage' => $this->currentPage,
+            'isEdit' => false,
+            'flash' => $_SESSION['flash'] ?? null
+        ], ['admin'], ['admin']);
+
+        unset($_SESSION['flash']);
+    }
+
+    /**
+     * Store a new maintenance window
+     */
+    public function storeMaintenance(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+
+        $title = trim($_POST['title'] ?? '');
+        $message = trim($_POST['message'] ?? '');
+        $startsAt = $_POST['starts_at'] ?? '';
+        $endsAt = $_POST['ends_at'] ?? '';
+        $isActive = isset($_POST['is_active']) ? 1 : 0;
+        $showCountdown = isset($_POST['show_countdown']) ? 1 : 0;
+
+        // Validation
+        if (empty($title) || empty($message) || empty($startsAt) || empty($endsAt)) {
+            $this->setFlash('error', 'All fields are required.');
+            $this->redirect('/admin/maintenance/create');
+            return;
+        }
+
+        // Convert to proper datetime format
+        $startsAtFormatted = date('Y-m-d H:i:s', strtotime($startsAt));
+        $endsAtFormatted = date('Y-m-d H:i:s', strtotime($endsAt));
+
+        if (strtotime($endsAtFormatted) <= strtotime($startsAtFormatted)) {
+            $this->setFlash('error', 'End time must be after start time.');
+            $this->redirect('/admin/maintenance/create');
+            return;
+        }
+
+        $maintenanceModel = new ScheduledMaintenance();
+        $maintenanceId = $maintenanceModel->create([
+            'title' => $title,
+            'message' => $message,
+            'starts_at' => $startsAtFormatted,
+            'ends_at' => $endsAtFormatted,
+            'is_active' => $isActive,
+            'show_countdown' => $showCountdown
+        ]);
+
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'maintenance_created',
+            'maintenance',
+            $maintenanceId,
+            null,
+            ['title' => $title, 'starts_at' => $startsAtFormatted, 'ends_at' => $endsAtFormatted],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Maintenance window scheduled successfully.');
+        $this->redirect('/admin/maintenance');
+    }
+
+    /**
+     * Show edit maintenance form
+     */
+    public function editMaintenance(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $maintenanceModel = new ScheduledMaintenance();
+        $maintenance = $maintenanceModel->find($id);
+
+        if (!$maintenance) {
+            $this->setFlash('error', 'Maintenance window not found.');
+            $this->redirect('/admin/maintenance');
+            return;
+        }
+
+        $this->currentPage = 'admin-maintenance';
+        $this->render('admin/maintenance_form', [
+            'pageTitle' => 'Admin - Edit Maintenance',
+            'currentPage' => $this->currentPage,
+            'maintenance' => $maintenance,
+            'isEdit' => true,
+            'flash' => $_SESSION['flash'] ?? null
+        ], ['admin'], ['admin']);
+
+        unset($_SESSION['flash']);
+    }
+
+    /**
+     * Update a maintenance window
+     */
+    public function updateMaintenance(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $maintenanceModel = new ScheduledMaintenance();
+        $maintenance = $maintenanceModel->find($id);
+
+        if (!$maintenance) {
+            $this->setFlash('error', 'Maintenance window not found.');
+            $this->redirect('/admin/maintenance');
+            return;
+        }
+
+        $title = trim($_POST['title'] ?? '');
+        $message = trim($_POST['message'] ?? '');
+        $startsAt = $_POST['starts_at'] ?? '';
+        $endsAt = $_POST['ends_at'] ?? '';
+        $isActive = isset($_POST['is_active']) ? 1 : 0;
+        $showCountdown = isset($_POST['show_countdown']) ? 1 : 0;
+
+        // Validation
+        if (empty($title) || empty($message) || empty($startsAt) || empty($endsAt)) {
+            $this->setFlash('error', 'All fields are required.');
+            $this->redirect("/admin/maintenance/{$id}/edit");
+            return;
+        }
+
+        // Convert to proper datetime format
+        $startsAtFormatted = date('Y-m-d H:i:s', strtotime($startsAt));
+        $endsAtFormatted = date('Y-m-d H:i:s', strtotime($endsAt));
+
+        if (strtotime($endsAtFormatted) <= strtotime($startsAtFormatted)) {
+            $this->setFlash('error', 'End time must be after start time.');
+            $this->redirect("/admin/maintenance/{$id}/edit");
+            return;
+        }
+
+        $maintenanceModel->update($id, [
+            'title' => $title,
+            'message' => $message,
+            'starts_at' => $startsAtFormatted,
+            'ends_at' => $endsAtFormatted,
+            'is_active' => $isActive,
+            'show_countdown' => $showCountdown
+        ]);
+
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'maintenance_updated',
+            'maintenance',
+            $id,
+            ['title' => $maintenance['title']],
+            ['title' => $title, 'starts_at' => $startsAtFormatted, 'ends_at' => $endsAtFormatted],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Maintenance window updated successfully.');
+        $this->redirect('/admin/maintenance');
+    }
+
+    /**
+     * Delete a maintenance window
+     */
+    public function deleteMaintenance(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $maintenanceModel = new ScheduledMaintenance();
+        $maintenance = $maintenanceModel->find($id);
+
+        if (!$maintenance) {
+            $this->setFlash('error', 'Maintenance window not found.');
+            $this->redirect('/admin/maintenance');
+            return;
+        }
+
+        $maintenanceModel->delete($id);
+
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'maintenance_deleted',
+            'maintenance',
+            $id,
+            ['title' => $maintenance['title']],
+            null,
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Maintenance window deleted successfully.');
+        $this->redirect('/admin/maintenance');
+    }
+
+    /**
+     * Toggle maintenance window active status
+     */
+    public function toggleMaintenance(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $maintenanceModel = new ScheduledMaintenance();
+        $maintenance = $maintenanceModel->find($id);
+
+        if (!$maintenance) {
+            $this->setFlash('error', 'Maintenance window not found.');
+            $this->redirect('/admin/maintenance');
+            return;
+        }
+
+        $maintenanceModel->toggleActive($id);
+        $newStatus = $maintenance['is_active'] ? 'disabled' : 'enabled';
+
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'maintenance_toggled',
+            'maintenance',
+            $id,
+            ['is_active' => $maintenance['is_active']],
+            ['is_active' => !$maintenance['is_active']],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', "Maintenance window {$newStatus} successfully.");
+        $this->redirect('/admin/maintenance');
+    }
 }

@@ -1,0 +1,267 @@
+/**
+ * Maintenance Page Styles
+ */
+
+:root {
+    --maintenance-bg: #1a1a2e;
+    --maintenance-card-bg: #16213e;
+    --maintenance-primary: #e94560;
+    --maintenance-secondary: #0f3460;
+    --maintenance-text: #eaeaea;
+    --maintenance-text-muted: #a0a0a0;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--maintenance-bg);
+    color: var(--maintenance-text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.maintenance-container {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    padding: 2rem;
+    text-align: center;
+}
+
+.maintenance-content {
+    background: var(--maintenance-card-bg);
+    border-radius: 20px;
+    padding: 3rem 2rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    position: relative;
+    z-index: 10;
+}
+
+.maintenance-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, var(--maintenance-primary), var(--maintenance-secondary));
+    border-radius: 50%;
+    margin-bottom: 2rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.maintenance-icon svg {
+    color: white;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(233, 69, 96, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 20px rgba(233, 69, 96, 0);
+    }
+}
+
+.maintenance-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--maintenance-text);
+}
+
+.maintenance-message {
+    font-size: 1.1rem;
+    color: var(--maintenance-text-muted);
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.countdown-section {
+    margin: 2rem 0;
+}
+
+.countdown-label {
+    font-size: 0.9rem;
+    color: var(--maintenance-text-muted);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.countdown {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.countdown-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 70px;
+}
+
+.countdown-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--maintenance-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.countdown-unit {
+    font-size: 0.75rem;
+    color: var(--maintenance-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.countdown-separator {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--maintenance-primary);
+    padding-bottom: 1.5rem;
+}
+
+.maintenance-footer {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.maintenance-footer p {
+    color: var(--maintenance-text-muted);
+    font-size: 0.9rem;
+}
+
+.site-name {
+    font-weight: 600;
+    color: var(--maintenance-text);
+    margin-top: 0.5rem !important;
+}
+
+/* Animated gears in background */
+.maintenance-animation {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.1;
+}
+
+.gear {
+    position: absolute;
+    border: 8px solid var(--maintenance-primary);
+    border-radius: 50%;
+}
+
+.gear::before,
+.gear::after {
+    content: '';
+    position: absolute;
+    background: var(--maintenance-primary);
+}
+
+.gear-1 {
+    width: 150px;
+    height: 150px;
+    top: 10%;
+    left: 10%;
+    animation: rotate 10s linear infinite;
+}
+
+.gear-1::before {
+    width: 20px;
+    height: 100%;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+}
+
+.gear-1::after {
+    width: 100%;
+    height: 20px;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+}
+
+.gear-2 {
+    width: 100px;
+    height: 100px;
+    bottom: 15%;
+    right: 15%;
+    animation: rotate-reverse 8s linear infinite;
+}
+
+.gear-2::before {
+    width: 15px;
+    height: 100%;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+}
+
+.gear-2::after {
+    width: 100%;
+    height: 15px;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes rotate-reverse {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .maintenance-container {
+        padding: 1rem;
+    }
+    
+    .maintenance-content {
+        padding: 2rem 1.5rem;
+    }
+    
+    .maintenance-icon {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .maintenance-icon svg {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .maintenance-title {
+        font-size: 1.5rem;
+    }
+    
+    .countdown-value {
+        font-size: 2rem;
+    }
+    
+    .countdown-item {
+        min-width: 60px;
+    }
+}

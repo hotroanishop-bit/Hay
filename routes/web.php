@@ -1446,6 +1446,116 @@ $routes = [
         'action' => 'refresh',
         'middleware' => [AdminMiddleware::class]
     ],
+
+    // =====================
+    // Admin Scheduled Maintenance Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/maintenance',
+        'controller' => AdminController::class,
+        'action' => 'scheduledMaintenance',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/maintenance/create',
+        'controller' => AdminController::class,
+        'action' => 'createMaintenance',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/maintenance',
+        'controller' => AdminController::class,
+        'action' => 'storeMaintenance',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/maintenance/{id}/edit',
+        'controller' => AdminController::class,
+        'action' => 'editMaintenance',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/maintenance/{id}/update',
+        'controller' => AdminController::class,
+        'action' => 'updateMaintenance',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/maintenance/{id}/delete',
+        'controller' => AdminController::class,
+        'action' => 'deleteMaintenance',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/maintenance/{id}/toggle',
+        'controller' => AdminController::class,
+        'action' => 'toggleMaintenance',
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    // =====================
+    // Telegram Integration Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/profile/telegram',
+        'controller' => TelegramController::class,
+        'action' => 'showLink',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/telegram/link',
+        'controller' => TelegramController::class,
+        'action' => 'generateLink',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/telegram/unlink',
+        'controller' => TelegramController::class,
+        'action' => 'unlink',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/telegram/webhook',
+        'controller' => TelegramController::class,
+        'action' => 'webhook',
+        'middleware' => []
+    ],
+
+    // =====================
+    // Auto Top-Up Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/billing/auto-topup',
+        'controller' => AutoTopupController::class,
+        'action' => 'index',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/billing/auto-topup',
+        'controller' => AutoTopupController::class,
+        'action' => 'update',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/billing/auto-topup/toggle',
+        'controller' => AutoTopupController::class,
+        'action' => 'toggle',
+        'middleware' => [AuthMiddleware::class]
+    ],
 ];
 
 return $routes;
