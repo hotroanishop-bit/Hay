@@ -932,6 +932,77 @@ $routes = [
     ],
 
     // =====================
+    // Admin Coupons Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/coupons',
+        'controller' => AdminController::class,
+        'action' => 'coupons',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/coupons/create',
+        'controller' => AdminController::class,
+        'action' => 'createCoupon',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/coupons',
+        'controller' => AdminController::class,
+        'action' => 'storeCoupon',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/coupons/{id}/edit',
+        'controller' => AdminController::class,
+        'action' => 'editCoupon',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/coupons/{id}/update',
+        'controller' => AdminController::class,
+        'action' => 'updateCoupon',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/coupons/{id}/delete',
+        'controller' => AdminController::class,
+        'action' => 'deleteCoupon',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/coupons/{id}/toggle',
+        'controller' => AdminController::class,
+        'action' => 'toggleCoupon',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/coupons/{id}/stats',
+        'controller' => AdminController::class,
+        'action' => 'couponStats',
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    // =====================
+    // User Coupon Routes
+    // =====================
+    [
+        'method' => 'POST',
+        'path' => '/coupon/validate',
+        'controller' => CouponController::class,
+        'action' => 'validateCode',
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    // =====================
     // Theme Routes (Public - saves to session/user)
     // =====================
     [

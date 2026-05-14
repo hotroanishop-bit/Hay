@@ -85,6 +85,53 @@
                         </div>
                     </div>
 
+                    <!-- Coupon Code Section -->
+                    <div class="form-group">
+                        <label for="coupon_code" class="form-label">Promo Code (Optional)</label>
+                        <div class="coupon-input-wrapper">
+                            <input type="text" 
+                                   id="coupon_code" 
+                                   name="coupon_code" 
+                                   class="form-input coupon-input" 
+                                   placeholder="Enter coupon code"
+                                   maxlength="50"
+                                   autocomplete="off">
+                            <button type="button" class="btn btn-secondary coupon-apply-btn" id="applyCouponBtn" onclick="validateCoupon()">
+                                Apply
+                            </button>
+                        </div>
+                        <div id="couponMessage" class="coupon-message"></div>
+                    </div>
+
+                    <!-- Coupon Preview -->
+                    <div id="couponPreview" class="coupon-preview" style="display: none;">
+                        <div class="coupon-preview-header">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"></path></svg>
+                            <span>Coupon Applied</span>
+                            <button type="button" class="coupon-remove-btn" onclick="removeCoupon()" title="Remove coupon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </div>
+                        <div class="coupon-preview-details">
+                            <div class="coupon-detail-row">
+                                <span>Original Amount:</span>
+                                <span id="originalAmount">0 VND</span>
+                            </div>
+                            <div class="coupon-detail-row discount" id="discountRow" style="display: none;">
+                                <span>Discount:</span>
+                                <span id="discountAmount" class="text-success">-0 VND</span>
+                            </div>
+                            <div class="coupon-detail-row bonus" id="bonusRow" style="display: none;">
+                                <span>Bonus Credits:</span>
+                                <span id="bonusAmount" class="text-success">+0 VND</span>
+                            </div>
+                            <div class="coupon-detail-row total">
+                                <span>You Pay:</span>
+                                <span id="finalAmount">0 VND</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <button type="submit" class="btn btn-primary btn-lg w-full" id="submitBtn">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect><path d="M21 16h-3a2 2 0 0 0-2 2v3"></path><path d="M21 21v.01"></path><path d="M12 7v3a2 2 0 0 1-2 2H7"></path><path d="M3 12h.01"></path><path d="M12 3h.01"></path><path d="M12 16v.01"></path><path d="M16 12h1"></path><path d="M21 12v.01"></path><path d="M12 21v-1"></path></svg>
@@ -520,6 +567,100 @@
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+/* Coupon Input */
+.coupon-input-wrapper {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.coupon-input {
+    flex: 1;
+    text-transform: uppercase;
+}
+
+.coupon-apply-btn {
+    white-space: nowrap;
+    min-width: 80px;
+}
+
+.coupon-message {
+    margin-top: var(--space-2);
+    font-size: var(--font-size-sm);
+    min-height: 20px;
+}
+
+.coupon-message.success {
+    color: var(--color-success);
+}
+
+.coupon-message.error {
+    color: var(--color-danger);
+}
+
+/* Coupon Preview */
+.coupon-preview {
+    background: var(--color-success-light);
+    border: 1px solid var(--color-success);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.coupon-preview-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-success-dark);
+    margin-bottom: var(--space-3);
+}
+
+.coupon-preview-header svg {
+    color: var(--color-success);
+}
+
+.coupon-remove-btn {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: var(--space-1);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.coupon-remove-btn:hover {
+    color: var(--color-danger);
+    background: var(--color-danger-light);
+}
+
+.coupon-preview-details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.coupon-detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.coupon-detail-row.total {
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    padding-top: var(--space-2);
+    border-top: 1px dashed var(--color-success);
+    margin-top: var(--space-1);
+}
+
+.coupon-detail-row .text-success {
+    color: var(--color-success);
+    font-weight: var(--font-weight-semibold);
+}
 </style>
 
 <script>
@@ -549,6 +690,122 @@ document.getElementById('amount').addEventListener('blur', function(e) {
         this.value = min;
     } else if (value > max) {
         this.value = max;
+    }
+    
+    // Re-validate coupon if one is applied
+    if (window.appliedCoupon) {
+        validateCoupon();
+    }
+});
+
+// Coupon validation state
+window.appliedCoupon = null;
+
+// Validate coupon via AJAX
+function validateCoupon() {
+    var code = document.getElementById('coupon_code').value.trim();
+    var amount = parseInt(document.getElementById('amount').value) || 0;
+    var messageDiv = document.getElementById('couponMessage');
+    var previewDiv = document.getElementById('couponPreview');
+    var applyBtn = document.getElementById('applyCouponBtn');
+    
+    if (!code) {
+        messageDiv.textContent = 'Please enter a coupon code';
+        messageDiv.className = 'coupon-message error';
+        return;
+    }
+    
+    if (amount <= 0) {
+        messageDiv.textContent = 'Please enter a deposit amount first';
+        messageDiv.className = 'coupon-message error';
+        return;
+    }
+    
+    // Show loading state
+    applyBtn.disabled = true;
+    applyBtn.textContent = 'Checking...';
+    messageDiv.textContent = '';
+    
+    // Send AJAX request
+    var formData = new FormData();
+    formData.append('code', code);
+    formData.append('amount', amount);
+    formData.append('csrf_token', '<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>');
+    
+    fetch('/coupon/validate', {
+        method: 'POST',
+        body: formData
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        applyBtn.disabled = false;
+        applyBtn.textContent = 'Apply';
+        
+        if (data.success) {
+            window.appliedCoupon = data.data;
+            messageDiv.textContent = data.message;
+            messageDiv.className = 'coupon-message success';
+            showCouponPreview(data.data, amount);
+        } else {
+            window.appliedCoupon = null;
+            messageDiv.textContent = data.message;
+            messageDiv.className = 'coupon-message error';
+            previewDiv.style.display = 'none';
+        }
+    })
+    .catch(function(error) {
+        applyBtn.disabled = false;
+        applyBtn.textContent = 'Apply';
+        messageDiv.textContent = 'Error validating coupon. Please try again.';
+        messageDiv.className = 'coupon-message error';
+    });
+}
+
+// Show coupon preview
+function showCouponPreview(couponData, originalAmount) {
+    var previewDiv = document.getElementById('couponPreview');
+    var discountRow = document.getElementById('discountRow');
+    var bonusRow = document.getElementById('bonusRow');
+    
+    document.getElementById('originalAmount').textContent = formatNumber(originalAmount) + ' VND';
+    document.getElementById('finalAmount').textContent = formatNumber(couponData.final_amount) + ' VND';
+    
+    if (couponData.discount > 0) {
+        discountRow.style.display = 'flex';
+        document.getElementById('discountAmount').textContent = '-' + formatNumber(couponData.discount) + ' VND';
+    } else {
+        discountRow.style.display = 'none';
+    }
+    
+    if (couponData.bonus > 0) {
+        bonusRow.style.display = 'flex';
+        document.getElementById('bonusAmount').textContent = '+' + formatNumber(couponData.bonus) + ' VND';
+    } else {
+        bonusRow.style.display = 'none';
+    }
+    
+    previewDiv.style.display = 'block';
+}
+
+// Remove applied coupon
+function removeCoupon() {
+    window.appliedCoupon = null;
+    document.getElementById('coupon_code').value = '';
+    document.getElementById('couponMessage').textContent = '';
+    document.getElementById('couponMessage').className = 'coupon-message';
+    document.getElementById('couponPreview').style.display = 'none';
+}
+
+// Format number with thousand separators
+function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+// Validate coupon on Enter key
+document.getElementById('coupon_code').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        validateCoupon();
     }
 });
 

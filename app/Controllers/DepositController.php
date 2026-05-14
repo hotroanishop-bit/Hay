@@ -11,6 +11,8 @@ class DepositController extends BaseController
     private VietQRService $vietQRService;
     private SettingsService $settingsService;
     private AuditService $auditService;
+    private CouponService $couponService;
+    private Coupon $couponModel;
 
     public function __construct()
     {
@@ -22,6 +24,8 @@ class DepositController extends BaseController
         $this->vietQRService = new VietQRService();
         $this->settingsService = new SettingsService();
         $this->auditService = new AuditService();
+        $this->couponService = new CouponService();
+        $this->couponModel = new Coupon();
     }
 
     /**
@@ -67,8 +71,9 @@ class DepositController extends BaseController
             return;
         }
 
-        // Get amount from POST
+        // Get amount and coupon code from POST
         $amount = isset($_POST['amount']) ? (int)$_POST['amount'] : 0;
+        $couponCode = isset($_POST['coupon_code']) ? trim($_POST['coupon_code']) : '';
 
         // Get payment settings for validation
         $paymentSettings = $this->settingsService->getPaymentSettings();
@@ -94,17 +99,38 @@ class DepositController extends BaseController
             return;
         }
 
+        // Process coupon if provided
+        $couponId = null;
+        $discountAmount = 0;
+        $bonusAmount = 0;
+        $finalAmount = $amount;
+
+        if (!empty($couponCode)) {
+            $couponValidation = $this->couponService->validateCoupon($couponCode, $user['id'], $amount);
+            
+            if (!$couponValidation['valid']) {
+                $this->setFlash('error', $couponValidation['message']);
+                $this->redirect('/billing/deposit');
+                return;
+            }
+
+            $couponId = $couponValidation['coupon']['id'];
+            $discountAmount = $couponValidation['discount'];
+            $bonusAmount = $couponValidation['bonus'];
+            $finalAmount = $couponValidation['final_amount'];
+        }
+
         // Get bank ID from bank name
         $bankId = $this->getBankIdFromName($bankName);
 
         // Generate unique reference code
         $referenceCode = $this->vietQRService->generateReferenceCode();
 
-        // Generate QR data URL
+        // Generate QR data URL with final amount (after discount)
         $qrData = $this->vietQRService->generateQR(
             $bankId,
             $bankAccountNumber,
-            $amount,
+            $finalAmount,
             $referenceCode,
             $accountHolderName
         );
@@ -116,14 +142,27 @@ class DepositController extends BaseController
             'reference_code' => $referenceCode,
             'bank_account' => $bankAccountNumber,
             'status' => 'pending',
-            'qr_data' => $qrData
+            'qr_data' => $qrData,
+            'coupon_id' => $couponId,
+            'discount_amount' => $discountAmount,
+            'bonus_amount' => $bonusAmount
         ]);
+
+        // Apply coupon usage if provided
+        if ($couponId) {
+            $amountSaved = $discountAmount + $bonusAmount;
+            $this->couponService->applyCoupon($couponId, $user['id'], $depositId, $amountSaved);
+        }
 
         // Log audit
         $this->auditService->log($user['id'], 'deposit_created', [
             'deposit_id' => $depositId,
             'amount' => $amount,
-            'reference_code' => $referenceCode
+            'reference_code' => $referenceCode,
+            'coupon_code' => $couponCode ?: null,
+            'discount_amount' => $discountAmount,
+            'bonus_amount' => $bonusAmount,
+            'final_amount' => $finalAmount
         ]);
 
         $this->setFlash('success', 'Deposit request created successfully. Please complete the payment.');

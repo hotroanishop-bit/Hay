@@ -22,6 +22,8 @@ class AdminController extends BaseController
     private CustomPage $customPageModel;
     private MenuItem $menuItemModel;
     private Notification $notificationModel;
+    private Coupon $couponModel;
+    private CouponUsage $couponUsageModel;
 
     public function __construct()
     {
@@ -43,6 +45,8 @@ class AdminController extends BaseController
         $this->customPageModel = new CustomPage();
         $this->menuItemModel = new MenuItem();
         $this->notificationModel = new Notification();
+        $this->couponModel = new Coupon();
+        $this->couponUsageModel = new CouponUsage();
     }
 
     /**
@@ -2701,5 +2705,373 @@ class AdminController extends BaseController
 
         $this->setFlash('success', 'Notification deleted successfully');
         $this->redirect('/admin/notifications');
+    }
+
+    // =====================
+    // Coupon Management
+    // =====================
+
+    /**
+     * List all coupons with stats
+     */
+    public function coupons(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $coupons = $this->couponModel->getAllWithStats();
+
+        // Get summary stats
+        $totalCoupons = count($coupons);
+        $activeCoupons = count(array_filter($coupons, function($c) {
+            return !empty($c['is_active']);
+        }));
+        $totalUsages = array_sum(array_column($coupons, 'total_usages'));
+        $totalSavings = array_sum(array_column($coupons, 'total_savings'));
+
+        $this->currentPage = 'admin-coupons';
+        $this->render('admin/coupons', [
+            'pageTitle' => 'Admin - Coupons',
+            'currentPage' => $this->currentPage,
+            'coupons' => $coupons,
+            'stats' => [
+                'total' => $totalCoupons,
+                'active' => $activeCoupons,
+                'usages' => $totalUsages,
+                'savings' => $totalSavings
+            ]
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Show create coupon form
+     */
+    public function createCoupon(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $this->currentPage = 'admin-coupons';
+        $this->render('admin/coupon_form', [
+            'pageTitle' => 'Admin - Create Coupon',
+            'currentPage' => $this->currentPage,
+            'coupon' => null,
+            'isEdit' => false
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Store a new coupon
+     */
+    public function storeCoupon(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+
+        // Get form data
+        $code = strtoupper(trim($_POST['code'] ?? ''));
+        $type = trim($_POST['type'] ?? 'percentage');
+        $value = (float)($_POST['value'] ?? 0);
+        $minAmount = (float)($_POST['min_amount'] ?? 0);
+        $maxUses = (int)($_POST['max_uses'] ?? 0);
+        $maxUsesPerUser = (int)($_POST['max_uses_per_user'] ?? 1);
+        $expiresAt = trim($_POST['expires_at'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $isActive = isset($_POST['is_active']) ? 1 : 0;
+
+        // Validate required fields
+        if (empty($code)) {
+            $this->setFlash('error', 'Coupon code is required');
+            $this->redirect('/admin/coupons/create');
+            return;
+        }
+
+        if ($value <= 0) {
+            $this->setFlash('error', 'Coupon value must be greater than 0');
+            $this->redirect('/admin/coupons/create');
+            return;
+        }
+
+        // Validate code uniqueness
+        if ($this->couponModel->codeExists($code)) {
+            $this->setFlash('error', 'Coupon code already exists');
+            $this->redirect('/admin/coupons/create');
+            return;
+        }
+
+        // Validate type
+        $validTypes = ['percentage', 'fixed', 'bonus'];
+        if (!in_array($type, $validTypes)) {
+            $type = 'percentage';
+        }
+
+        // Validate percentage value
+        if ($type === 'percentage' && $value > 100) {
+            $this->setFlash('error', 'Percentage discount cannot exceed 100%');
+            $this->redirect('/admin/coupons/create');
+            return;
+        }
+
+        // Create coupon
+        $couponId = $this->couponModel->createCoupon([
+            'code' => $code,
+            'type' => $type,
+            'value' => $value,
+            'min_amount' => $minAmount,
+            'max_uses' => $maxUses > 0 ? $maxUses : null,
+            'max_uses_per_user' => $maxUsesPerUser,
+            'expires_at' => !empty($expiresAt) ? $expiresAt : null,
+            'description' => $description,
+            'is_active' => $isActive,
+            'used_count' => 0
+        ]);
+
+        // Log audit
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'coupon_created',
+            'coupon',
+            $couponId,
+            null,
+            ['code' => $code, 'type' => $type, 'value' => $value],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Coupon created successfully');
+        $this->redirect('/admin/coupons');
+    }
+
+    /**
+     * Show edit coupon form
+     */
+    public function editCoupon(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $coupon = $this->couponModel->find($id);
+
+        if (!$coupon) {
+            $this->setFlash('error', 'Coupon not found');
+            $this->redirect('/admin/coupons');
+            return;
+        }
+
+        $this->currentPage = 'admin-coupons';
+        $this->render('admin/coupon_form', [
+            'pageTitle' => 'Admin - Edit Coupon',
+            'currentPage' => $this->currentPage,
+            'coupon' => $coupon,
+            'isEdit' => true
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Update a coupon
+     */
+    public function updateCoupon(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $coupon = $this->couponModel->find($id);
+
+        if (!$coupon) {
+            $this->setFlash('error', 'Coupon not found');
+            $this->redirect('/admin/coupons');
+            return;
+        }
+
+        // Get form data
+        $code = strtoupper(trim($_POST['code'] ?? ''));
+        $type = trim($_POST['type'] ?? 'percentage');
+        $value = (float)($_POST['value'] ?? 0);
+        $minAmount = (float)($_POST['min_amount'] ?? 0);
+        $maxUses = (int)($_POST['max_uses'] ?? 0);
+        $maxUsesPerUser = (int)($_POST['max_uses_per_user'] ?? 1);
+        $expiresAt = trim($_POST['expires_at'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $isActive = isset($_POST['is_active']) ? 1 : 0;
+
+        // Validate required fields
+        if (empty($code)) {
+            $this->setFlash('error', 'Coupon code is required');
+            $this->redirect('/admin/coupons/' . $id . '/edit');
+            return;
+        }
+
+        if ($value <= 0) {
+            $this->setFlash('error', 'Coupon value must be greater than 0');
+            $this->redirect('/admin/coupons/' . $id . '/edit');
+            return;
+        }
+
+        // Validate code uniqueness (excluding current coupon)
+        if ($this->couponModel->codeExists($code, $id)) {
+            $this->setFlash('error', 'Coupon code already exists');
+            $this->redirect('/admin/coupons/' . $id . '/edit');
+            return;
+        }
+
+        // Validate type
+        $validTypes = ['percentage', 'fixed', 'bonus'];
+        if (!in_array($type, $validTypes)) {
+            $type = 'percentage';
+        }
+
+        // Validate percentage value
+        if ($type === 'percentage' && $value > 100) {
+            $this->setFlash('error', 'Percentage discount cannot exceed 100%');
+            $this->redirect('/admin/coupons/' . $id . '/edit');
+            return;
+        }
+
+        // Store old values for audit
+        $oldValues = [
+            'code' => $coupon['code'],
+            'type' => $coupon['type'],
+            'value' => $coupon['value'],
+            'is_active' => $coupon['is_active']
+        ];
+
+        // Update coupon
+        $this->couponModel->updateCoupon($id, [
+            'code' => $code,
+            'type' => $type,
+            'value' => $value,
+            'min_amount' => $minAmount,
+            'max_uses' => $maxUses > 0 ? $maxUses : null,
+            'max_uses_per_user' => $maxUsesPerUser,
+            'expires_at' => !empty($expiresAt) ? $expiresAt : null,
+            'description' => $description,
+            'is_active' => $isActive
+        ]);
+
+        // Log audit
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'coupon_updated',
+            'coupon',
+            $id,
+            $oldValues,
+            ['code' => $code, 'type' => $type, 'value' => $value, 'is_active' => $isActive],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Coupon updated successfully');
+        $this->redirect('/admin/coupons');
+    }
+
+    /**
+     * Delete (deactivate) a coupon
+     */
+    public function deleteCoupon(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $coupon = $this->couponModel->find($id);
+
+        if (!$coupon) {
+            $this->setFlash('error', 'Coupon not found');
+            $this->redirect('/admin/coupons');
+            return;
+        }
+
+        // Soft delete by deactivating
+        $this->couponModel->update($id, [
+            'is_active' => 0,
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
+
+        // Log audit
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'coupon_deleted',
+            'coupon',
+            $id,
+            ['is_active' => $coupon['is_active']],
+            ['is_active' => 0],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Coupon deactivated successfully');
+        $this->redirect('/admin/coupons');
+    }
+
+    /**
+     * Toggle coupon active status
+     */
+    public function toggleCoupon(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $coupon = $this->couponModel->find($id);
+
+        if (!$coupon) {
+            $this->setFlash('error', 'Coupon not found');
+            $this->redirect('/admin/coupons');
+            return;
+        }
+
+        $oldActive = $coupon['is_active'];
+        $this->couponModel->toggleActive($id);
+
+        // Log audit
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            $oldActive ? 'coupon_deactivated' : 'coupon_activated',
+            'coupon',
+            $id,
+            ['is_active' => $oldActive],
+            ['is_active' => !$oldActive],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Coupon ' . ($oldActive ? 'deactivated' : 'activated') . ' successfully');
+        $this->redirect('/admin/coupons');
+    }
+
+    /**
+     * Show coupon statistics
+     */
+    public function couponStats(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $coupon = $this->couponModel->find($id);
+
+        if (!$coupon) {
+            $this->setFlash('error', 'Coupon not found');
+            $this->redirect('/admin/coupons');
+            return;
+        }
+
+        $stats = $this->couponModel->getStats($id);
+        $usages = $this->couponUsageModel->getByCoupon($id);
+
+        $this->currentPage = 'admin-coupons';
+        $this->render('admin/coupon_stats', [
+            'pageTitle' => 'Admin - Coupon Stats',
+            'currentPage' => $this->currentPage,
+            'coupon' => $coupon,
+            'stats' => $stats['stats'],
+            'usages' => $usages
+        ], ['admin'], ['admin']);
     }
 }
