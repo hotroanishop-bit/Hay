@@ -276,4 +276,50 @@ class UsageLog extends BaseModel
         
         return $this->query($sql, ['user_id' => $userId, 'days' => $days]);
     }
+
+    /**
+     * Get today's usage summary for a user
+     */
+    public function getTodayUsage(int $userId): array
+    {
+        $sql = "SELECT 
+                    COUNT(*) as requests,
+                    COALESCE(SUM(tokens_used), 0) as tokens,
+                    COALESCE(SUM(input_tokens), 0) as input_tokens,
+                    COALESCE(SUM(output_tokens), 0) as output_tokens,
+                    COALESCE(SUM(cost), 0) as cost,
+                    COALESCE(AVG(response_time_ms), 0) as avg_response_time
+                FROM {$this->table} 
+                WHERE user_id = :user_id 
+                    AND DATE(created_at) = CURDATE()";
+        
+        $result = $this->query($sql, ['user_id' => $userId]);
+        return $result[0] ?? [
+            'requests' => 0,
+            'tokens' => 0,
+            'input_tokens' => 0,
+            'output_tokens' => 0,
+            'cost' => 0,
+            'avg_response_time' => 0
+        ];
+    }
+
+    /**
+     * Get usage breakdown by billing type for a user
+     */
+    public function getUsageByBillingType(int $userId, int $days = 30): array
+    {
+        $sql = "SELECT 
+                    COALESCE(billing_type, 'payg') as billing_type,
+                    COUNT(*) as requests,
+                    COALESCE(SUM(tokens_used), 0) as total_tokens,
+                    COALESCE(SUM(cost), 0) as total_cost
+                FROM {$this->table} 
+                WHERE user_id = :user_id 
+                    AND created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
+                GROUP BY billing_type
+                ORDER BY requests DESC";
+        
+        return $this->query($sql, ['user_id' => $userId, 'days' => $days]);
+    }
 }

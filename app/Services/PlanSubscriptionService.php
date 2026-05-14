@@ -18,6 +18,175 @@ class PlanSubscriptionService
     }
 
     /**
+     * Check if user has sufficient plan tokens
+     */
+    public function hasSufficientPlanTokens(int $userId, int $tokens): bool
+    {
+        $user = $this->userModel->find($userId);
+        
+        if (!$user) {
+            return false;
+        }
+        
+        $planTokens = (int) ($user['plan_tokens'] ?? 0);
+        
+        // Check if plan tokens have expired
+        $expiresAt = $user['plan_tokens_expires_at'] ?? null;
+        if ($expiresAt !== null && strtotime($expiresAt) < time()) {
+            return false;
+        }
+        
+        return $planTokens >= $tokens;
+    }
+
+    /**
+     * Check if user has sufficient PAYG balance
+     */
+    public function hasSufficientPaygBalance(int $userId, float $amount): bool
+    {
+        $user = $this->userModel->find($userId);
+        
+        if (!$user) {
+            return false;
+        }
+        
+        $paygBalance = (float) ($user['payg_balance'] ?? 0);
+        return $paygBalance >= $amount;
+    }
+
+    /**
+     * Check if user is within daily token limit (for free plan users)
+     */
+    public function checkDailyTokenLimit(int $userId, int $tokens): bool
+    {
+        $user = $this->userModel->find($userId);
+        
+        if (!$user) {
+            return false;
+        }
+        
+        // Get user's current plan
+        $planId = $user['current_plan_id'] ?? null;
+        if (!$planId) {
+            // No plan, check global daily limit (assume 10000 tokens for free users)
+            $dailyLimit = 10000;
+        } else {
+            $plan = $this->planModel->find($planId);
+            if (!$plan) {
+                return true; // No plan restrictions
+            }
+            
+            // Only apply daily limit for free plans
+            if (!($plan['is_free'] ?? false)) {
+                return true; // Paid plans have no daily limit
+            }
+            
+            $dailyLimit = (int) ($plan['daily_token_limit'] ?? 0);
+            if ($dailyLimit === 0) {
+                return true; // No limit set
+            }
+        }
+        
+        $dailyUsed = (int) ($user['daily_tokens_used'] ?? 0);
+        
+        return ($dailyUsed + $tokens) <= $dailyLimit;
+    }
+
+    /**
+     * Increment daily tokens used
+     */
+    public function incrementDailyTokens(int $userId, int $tokens): bool
+    {
+        return $this->userModel->execute(
+            "UPDATE users SET daily_tokens_used = daily_tokens_used + :tokens, updated_at = NOW() WHERE id = :user_id",
+            ['tokens' => $tokens, 'user_id' => $userId]
+        );
+    }
+
+    /**
+     * Get user's preferred billing type, or switch to alternative if primary is insufficient
+     */
+    public function getPreferredBillingType(int $userId): string
+    {
+        $user = $this->userModel->find($userId);
+        
+        if (!$user) {
+            return 'payg';
+        }
+        
+        return $user['preferred_billing_type'] ?? 'payg';
+    }
+
+    /**
+     * Update user's preferred billing type
+     */
+    public function updatePreferredBillingType(int $userId, string $billingType): bool
+    {
+        $validTypes = ['payg', 'plan'];
+        if (!in_array($billingType, $validTypes)) {
+            return false;
+        }
+        
+        return $this->userModel->execute(
+            "UPDATE users SET preferred_billing_type = :billing_type, updated_at = NOW() WHERE id = :user_id",
+            ['billing_type' => $billingType, 'user_id' => $userId]
+        );
+    }
+
+    /**
+     * Get both balances for a user
+     */
+    public function getBothBalances(int $userId): array
+    {
+        $user = $this->userModel->find($userId);
+        
+        if (!$user) {
+            return [
+                'payg_balance' => 0.0,
+                'plan_tokens' => 0,
+                'plan_tokens_expires_at' => null,
+                'daily_tokens_used' => 0,
+                'daily_tokens_reset_at' => null,
+                'preferred_billing_type' => 'payg',
+                'current_plan_id' => null
+            ];
+        }
+        
+        return [
+            'payg_balance' => (float) ($user['payg_balance'] ?? 0),
+            'plan_tokens' => (int) ($user['plan_tokens'] ?? 0),
+            'plan_tokens_expires_at' => $user['plan_tokens_expires_at'] ?? null,
+            'daily_tokens_used' => (int) ($user['daily_tokens_used'] ?? 0),
+            'daily_tokens_reset_at' => $user['daily_tokens_reset_at'] ?? null,
+            'preferred_billing_type' => $user['preferred_billing_type'] ?? 'payg',
+            'current_plan_id' => $user['current_plan_id'] ?? null
+        ];
+    }
+
+    /**
+     * Cancel user's current plan subscription
+     */
+    public function cancelPlan(int $userId): bool
+    {
+        // Cancel in user_plans table
+        $this->userPlanModel->cancel($userId);
+        
+        // Clear plan info from users table
+        return $this->userModel->execute(
+            "UPDATE users SET current_plan_id = NULL, plan_tokens = 0, plan_tokens_expires_at = NULL, updated_at = NOW() WHERE id = :user_id",
+            ['user_id' => $userId]
+        );
+    }
+
+    /**
+     * Get available plans for subscription
+     */
+    public function getAvailablePlans(): array
+    {
+        return $this->planModel->findActive();
+    }
+
+    /**
      * Subscribe a user to a plan
      */
     public function subscribeToPlan(int $userId, int $planId): int

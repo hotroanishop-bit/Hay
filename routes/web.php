@@ -285,6 +285,34 @@ $routes = [
     ],
     [
         'method' => 'GET',
+        'path' => '/billing/plans',
+        'controller' => BillingController::class,
+        'action' => 'plans',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/billing/switch-type',
+        'controller' => BillingController::class,
+        'action' => 'switchBillingType',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/billing/subscribe/{id}',
+        'controller' => BillingController::class,
+        'action' => 'subscribePlan',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/billing/cancel-plan',
+        'controller' => BillingController::class,
+        'action' => 'cancelPlan',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
         'path' => '/billing/history',
         'controller' => BillingController::class,
         'action' => 'history',

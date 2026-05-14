@@ -10,15 +10,21 @@ class ApiProxyController extends BaseController
     private TokenCounterService $tokenCounterService;
     private PlanService $planService;
     private CreditService $creditService;
+    private PlanSubscriptionService $planSubscriptionService;
     private UsageLog $usageLogModel;
     private ApiKey $apiKeyModel;
 
     public function __construct()
     {
+        $userModel = new User();
+        $planModel = new Plan();
+        $userPlanModel = new UserPlan();
+        
         $this->proxyService = new ProxyService();
         $this->tokenCounterService = new TokenCounterService();
-        $this->planService = new PlanService(new Plan(), new UsageLog());
-        $this->creditService = new CreditService(new User(), new Transaction(), new ModelPricing());
+        $this->planService = new PlanService($planModel, new UsageLog());
+        $this->creditService = new CreditService($userModel, new Transaction(), new ModelPricing());
+        $this->planSubscriptionService = new PlanSubscriptionService($userModel, $planModel, $userPlanModel);
         $this->usageLogModel = new UsageLog();
         $this->apiKeyModel = new ApiKey();
     }
@@ -129,27 +135,43 @@ class ApiProxyController extends BaseController
             $this->error('Messages array is required', 400);
         }
         
+        // Get billing type from header or user preference
+        $billingType = $this->planSubscriptionService->getBillingType(
+            $userId, 
+            $_SERVER['HTTP_X_BILLING_TYPE'] ?? null
+        );
+        
+        // Check and reset daily tokens for free plan users
+        $this->planSubscriptionService->checkAndResetDailyTokens($userId);
+        
         // Estimate input tokens
         $estimatedInputTokens = $this->tokenCounterService->countChatTokens($messages, $model);
         
-        // Check daily token limit
-        if (!$this->planService->checkDailyTokenLimit($userId, $estimatedInputTokens)) {
+        // Check daily token limit (for free plan users)
+        if (!$this->planSubscriptionService->checkDailyTokenLimit($userId, $estimatedInputTokens)) {
             $this->error('Daily token limit exceeded', 429, 'rate_limit_error');
         }
         
-        // Check balance pre-flight (estimate with some output buffer)
+        // Check balance based on billing type BEFORE making the request
         $estimatedOutputTokens = 500; // Conservative estimate for pre-flight
-        if (!$this->creditService->checkSufficientBalanceForRequest($userId, $model, $estimatedInputTokens, $estimatedOutputTokens)) {
-            $this->error('Insufficient balance', 402, 'insufficient_balance');
+        if ($billingType === 'plan') {
+            if (!$this->planSubscriptionService->hasSufficientPlanTokens($userId, $estimatedInputTokens + $estimatedOutputTokens)) {
+                $this->error('Insufficient plan tokens', 402, 'insufficient_balance');
+            }
+        } else {
+            // PAYG billing - check credit balance
+            if (!$this->creditService->checkSufficientBalanceForRequest($userId, $model, $estimatedInputTokens, $estimatedOutputTokens)) {
+                $this->error('Insufficient PAYG balance', 402, 'insufficient_balance');
+            }
         }
         
         // Get price multiplier for user's plan
         $priceMultiplier = $this->planService->getPriceMultiplier($userId);
         
         if ($stream) {
-            $this->handleStreamingChatCompletions($body, $model, $apiKeyId, $userId, $priceMultiplier, $estimatedInputTokens, $startTime, $requestId);
+            $this->handleStreamingChatCompletions($body, $model, $apiKeyId, $userId, $priceMultiplier, $estimatedInputTokens, $startTime, $requestId, $billingType);
         } else {
-            $this->handleNonStreamingChatCompletions($body, $model, $apiKeyId, $userId, $priceMultiplier, $startTime, $requestId);
+            $this->handleNonStreamingChatCompletions($body, $model, $apiKeyId, $userId, $priceMultiplier, $startTime, $requestId, $billingType);
         }
     }
 
@@ -163,7 +185,8 @@ class ApiProxyController extends BaseController
         int $userId,
         float $priceMultiplier,
         float $startTime,
-        string $requestId
+        string $requestId,
+        string $billingType = 'payg'
     ): void {
         // Forward request to upstream
         $response = $this->proxyService->forwardRequest($body, $model, false);
@@ -173,7 +196,7 @@ class ApiProxyController extends BaseController
         
         // Check for error response
         if (isset($response['error'])) {
-            $this->logUsage($apiKeyId, $userId, '/v1/chat/completions', 0, 0, 0, $responseTimeMs, $model, $requestId);
+            $this->logUsage($apiKeyId, $userId, '/v1/chat/completions', 0, 0, 0, $responseTimeMs, $model, $requestId, 0, $billingType);
             $this->json($response, $this->getErrorStatusCode($response['error']['type'] ?? 'api_error'));
         }
         
@@ -182,19 +205,26 @@ class ApiProxyController extends BaseController
         $completionTokens = $response['usage']['completion_tokens'] ?? 0;
         $totalTokens = $response['usage']['total_tokens'] ?? ($promptTokens + $completionTokens);
         
-        // Deduct credits based on actual usage
+        // Deduct based on billing type
         try {
-            $this->creditService->deductForApiUsage($userId, $model, $promptTokens, $completionTokens, $priceMultiplier);
+            if ($billingType === 'plan') {
+                // Deduct from plan tokens
+                $this->planSubscriptionService->deductPlanTokens($userId, $totalTokens);
+                $this->planSubscriptionService->incrementDailyTokens($userId, $totalTokens);
+                $cost = 0; // Plan tokens, no monetary cost
+            } else {
+                // Deduct from PAYG balance
+                $this->creditService->deductForApiUsage($userId, $model, $promptTokens, $completionTokens, $priceMultiplier);
+                $cost = $this->creditService->estimateCost($model, $promptTokens, $completionTokens, $priceMultiplier);
+            }
         } catch (Exception $e) {
             // Log the error but don't fail the request since it was already processed
-            error_log('Credit deduction failed: ' . $e->getMessage());
+            error_log('Billing deduction failed: ' . $e->getMessage());
+            $cost = 0;
         }
         
-        // Calculate cost for logging
-        $cost = $this->creditService->estimateCost($model, $promptTokens, $completionTokens, $priceMultiplier);
-        
         // Log usage with detailed tracking
-        $this->logUsage($apiKeyId, $userId, '/v1/chat/completions', $totalTokens, $cost, $promptTokens, $responseTimeMs, $model, $requestId, $completionTokens);
+        $this->logUsage($apiKeyId, $userId, '/v1/chat/completions', $totalTokens, $cost, $promptTokens, $responseTimeMs, $model, $requestId, $completionTokens, $billingType);
         
         // Increment API key usage count
         $this->apiKeyModel->incrementUsage($apiKeyId);
@@ -213,7 +243,8 @@ class ApiProxyController extends BaseController
         float $priceMultiplier,
         int $estimatedInputTokens,
         float $startTime,
-        string $requestId
+        string $requestId,
+        string $billingType = 'payg'
     ): void {
         // Set headers for SSE
         header('Content-Type: text/event-stream');
@@ -249,19 +280,28 @@ class ApiProxyController extends BaseController
         // Calculate response time
         $responseTimeMs = (int) ((microtime(true) - $startTime) * 1000);
         
-        // Deduct credits based on estimated usage
+        // Calculate total tokens
         $totalTokens = $estimatedInputTokens + $outputTokens;
+        
+        // Deduct based on billing type
         try {
-            $this->creditService->deductForApiUsage($userId, $model, $estimatedInputTokens, $outputTokens, $priceMultiplier);
+            if ($billingType === 'plan') {
+                // Deduct from plan tokens
+                $this->planSubscriptionService->deductPlanTokens($userId, $totalTokens);
+                $this->planSubscriptionService->incrementDailyTokens($userId, $totalTokens);
+                $cost = 0; // Plan tokens, no monetary cost
+            } else {
+                // Deduct from PAYG balance
+                $this->creditService->deductForApiUsage($userId, $model, $estimatedInputTokens, $outputTokens, $priceMultiplier);
+                $cost = $this->creditService->estimateCost($model, $estimatedInputTokens, $outputTokens, $priceMultiplier);
+            }
         } catch (Exception $e) {
-            error_log('Credit deduction failed: ' . $e->getMessage());
+            error_log('Billing deduction failed: ' . $e->getMessage());
+            $cost = 0;
         }
         
-        // Calculate cost for logging
-        $cost = $this->creditService->estimateCost($model, $estimatedInputTokens, $outputTokens, $priceMultiplier);
-        
         // Log usage with detailed tracking
-        $this->logUsage($apiKeyId, $userId, '/v1/chat/completions', $totalTokens, $cost, $estimatedInputTokens, $responseTimeMs, $model, $requestId, $outputTokens);
+        $this->logUsage($apiKeyId, $userId, '/v1/chat/completions', $totalTokens, $cost, $estimatedInputTokens, $responseTimeMs, $model, $requestId, $outputTokens, $billingType);
         
         // Increment API key usage count
         $this->apiKeyModel->incrementUsage($apiKeyId);
@@ -641,7 +681,8 @@ class ApiProxyController extends BaseController
         int $responseTimeMs = 0,
         string $model = '',
         string $requestId = '',
-        int $outputTokens = 0
+        int $outputTokens = 0,
+        string $billingType = 'payg'
     ): void {
         try {
             $this->usageLogModel->logApiRequest([
@@ -655,6 +696,7 @@ class ApiProxyController extends BaseController
                 'response_time_ms' => $responseTimeMs,
                 'request_id' => $requestId ?: null,
                 'cost' => $cost,
+                'billing_type' => $billingType,
                 'ip_address' => $_SERVER['REMOTE_ADDR'] ?? '',
                 'response_code' => http_response_code(),
             ]);

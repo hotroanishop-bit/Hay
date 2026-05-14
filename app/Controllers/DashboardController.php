@@ -9,9 +9,11 @@ class DashboardController extends BaseController
     private AuthService $authService;
     private APIService $apiService;
     private CreditService $creditService;
+    private PlanSubscriptionService $planSubscriptionService;
     private UsageLog $usageLogModel;
     private ApiKey $apiKeyModel;
     private Transaction $transactionModel;
+    private Plan $planModel;
 
     public function __construct()
     {
@@ -22,9 +24,11 @@ class DashboardController extends BaseController
         $this->apiKeyModel = new ApiKey();
         $this->usageLogModel = new UsageLog();
         $this->transactionModel = new Transaction();
+        $this->planModel = new Plan();
         
         $this->apiService = new APIService($this->apiKeyModel, $this->usageLogModel);
         $this->creditService = new CreditService($userModel, $this->transactionModel);
+        $this->planSubscriptionService = new PlanSubscriptionService($userModel, $this->planModel, new UserPlan());
     }
 
     /**
@@ -41,8 +45,17 @@ class DashboardController extends BaseController
 
         $userId = $user['id'];
 
-        // Get user's balance
+        // Get user's legacy balance (for backward compatibility)
         $balance = $this->creditService->getBalance($userId);
+
+        // Get dual billing balances
+        $balances = $this->planSubscriptionService->getBothBalances($userId);
+
+        // Get current plan details
+        $currentPlan = null;
+        if ($balances['current_plan_id']) {
+            $currentPlan = $this->planModel->find($balances['current_plan_id']);
+        }
 
         // Get API key statistics
         $apiKeys = $this->apiKeyModel->findByUser($userId);
@@ -51,6 +64,9 @@ class DashboardController extends BaseController
         // Get usage statistics
         $usageStats = $this->usageLogModel->getStatsByUser($userId);
         $dailyStats = $this->usageLogModel->getDailyStats($userId, 7);
+
+        // Get today's usage breakdown
+        $todayUsage = $this->usageLogModel->getTodayUsage($userId);
 
         // Get recent transactions
         $recentTransactions = $this->transactionModel->getRecent($userId, 5);
@@ -64,10 +80,13 @@ class DashboardController extends BaseController
             'currentPage' => $this->currentPage,
             'user' => $user,
             'balance' => $balance,
+            'balances' => $balances,
+            'currentPlan' => $currentPlan,
             'totalKeys' => count($apiKeys),
             'activeKeys' => count($activeKeys),
             'usageStats' => $usageStats,
             'dailyStats' => $dailyStats,
+            'todayUsage' => $todayUsage,
             'recentTransactions' => $recentTransactions,
             'recentUsage' => $recentUsage
         ], ['dashboard', 'analytics'], ['dashboard']);
