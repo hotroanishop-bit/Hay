@@ -103,6 +103,18 @@
                 </a>
             </li>
             
+            <li class="nav-item">
+                <a href="/webhooks" class="nav-link <?php echo ($currentPage === 'webhooks') ? 'active' : ''; ?>">
+                    <span class="nav-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                        </svg>
+                    </span>
+                    <span class="nav-text"><?php echo __('nav.webhooks', 'Webhooks'); ?></span>
+                </a>
+            </li>
+            
             <?php if (isset($_SESSION['user']['is_admin']) && $_SESSION['user']['is_admin']): ?>
             <!-- Admin Section -->
             <li class="nav-section"><?php echo __('nav.admin', 'Admin'); ?></li>

@@ -1069,6 +1069,73 @@ $routes = [
         'action' => 'delete',
         'middleware' => [AuthMiddleware::class]
     ],
+
+    // =====================
+    // Webhooks Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/webhooks',
+        'controller' => WebhookController::class,
+        'action' => 'index',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/webhooks/create',
+        'controller' => WebhookController::class,
+        'action' => 'create',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/webhooks',
+        'controller' => WebhookController::class,
+        'action' => 'store',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/webhooks/{id}/edit',
+        'controller' => WebhookController::class,
+        'action' => 'edit',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/webhooks/{id}',
+        'controller' => WebhookController::class,
+        'action' => 'update',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/webhooks/{id}/delete',
+        'controller' => WebhookController::class,
+        'action' => 'delete',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/webhooks/{id}/logs',
+        'controller' => WebhookController::class,
+        'action' => 'logs',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/webhooks/{id}/test',
+        'controller' => WebhookController::class,
+        'action' => 'test',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/webhooks/{id}/toggle',
+        'controller' => WebhookController::class,
+        'action' => 'toggle',
+        'middleware' => [AuthMiddleware::class]
+    ],
 ];
 
 return $routes;

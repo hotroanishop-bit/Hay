@@ -24,6 +24,7 @@ class AdminController extends BaseController
     private Notification $notificationModel;
     private Coupon $couponModel;
     private CouponUsage $couponUsageModel;
+    private WebhookService $webhookService;
 
     public function __construct()
     {
@@ -47,7 +48,9 @@ class AdminController extends BaseController
         $this->notificationModel = new Notification();
         $this->couponModel = new Coupon();
         $this->couponUsageModel = new CouponUsage();
+        $this->webhookService = new WebhookService();
     }
+
 
     /**
      * Check if current user is admin
@@ -453,6 +456,18 @@ class AdminController extends BaseController
 
             $this->depositModel->commit();
 
+            // Trigger webhook notification (non-blocking, don't fail the main operation)
+            try {
+                $this->webhookService->triggerDepositApproved(
+                    $deposit['user_id'],
+                    $id,
+                    (float) $deposit['amount']
+                );
+            } catch (Exception $webhookException) {
+                // Log webhook failure but don't affect deposit approval
+                error_log('Webhook trigger failed for deposit approval: ' . $webhookException->getMessage());
+            }
+
             $this->setFlash('success', 'Deposit approved. $' . number_format($deposit['amount'], 2) . ' added to user balance.');
         } catch (Exception $e) {
             $this->depositModel->rollback();
@@ -500,6 +515,19 @@ class AdminController extends BaseController
             ['status' => 'rejected', 'reason' => $reason],
             $this->getClientIP()
         );
+
+        // Trigger webhook notification (non-blocking)
+        try {
+            $this->webhookService->triggerDepositRejected(
+                $deposit['user_id'],
+                $id,
+                (float) $deposit['amount'],
+                $reason
+            );
+        } catch (Exception $webhookException) {
+            // Log webhook failure but don't affect deposit rejection
+            error_log('Webhook trigger failed for deposit rejection: ' . $webhookException->getMessage());
+        }
 
         $this->setFlash('success', 'Deposit rejected.');
         $this->redirect('/admin/deposits/' . $id);
