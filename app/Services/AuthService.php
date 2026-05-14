@@ -122,9 +122,8 @@ class AuthService
             return false;
         }
 
-        // Verify TOTP code (simplified - in production use a TOTP library)
-        $expectedCode = $this->generateTOTP($user['two_factor_secret']);
-        if ($code !== $expectedCode) {
+        // Verify TOTP code with drift tolerance
+        if (!$this->verifyTOTP($user['two_factor_secret'], $code)) {
             return false;
         }
 
@@ -212,11 +211,10 @@ class AuthService
     }
 
     /**
-     * Generate TOTP code (simplified implementation)
+     * Generate TOTP code for a specific time window
      */
-    private function generateTOTP(string $secret): string
+    private function generateTOTPForTime(string $secret, int $time): string
     {
-        $time = floor(time() / 30);
         $hash = hash_hmac('sha1', pack('N*', 0) . pack('N*', $time), base64_decode($secret), true);
         $offset = ord(substr($hash, -1)) & 0x0F;
         $code = (
@@ -227,5 +225,32 @@ class AuthService
         ) % 1000000;
 
         return str_pad((string) $code, 6, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Generate TOTP code (current window)
+     */
+    private function generateTOTP(string $secret): string
+    {
+        $time = floor(time() / 30);
+        return $this->generateTOTPForTime($secret, $time);
+    }
+
+    /**
+     * Verify TOTP code with drift tolerance (checks current, previous, and next window)
+     */
+    private function verifyTOTP(string $secret, string $code): bool
+    {
+        $currentTime = floor(time() / 30);
+        
+        // Check current window and +/- 1 window for clock drift tolerance (30-60 seconds)
+        for ($offset = -1; $offset <= 1; $offset++) {
+            $expectedCode = $this->generateTOTPForTime($secret, $currentTime + $offset);
+            if ($code === $expectedCode) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 }

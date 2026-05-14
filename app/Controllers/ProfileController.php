@@ -313,9 +313,8 @@ class ProfileController extends BaseController
             return;
         }
 
-        // Verify the code
-        $expectedCode = $this->generateTOTP($secret);
-        if ($code !== $expectedCode) {
+        // Verify the code with drift tolerance
+        if (!$this->verifyTOTP($secret, $code)) {
             $this->setFlash('error', 'Invalid verification code');
             $this->redirect('/profile/2fa');
             return;
@@ -360,8 +359,8 @@ class ProfileController extends BaseController
             return;
         }
 
-        $expectedCode = $this->generateTOTP(base64_decode($secret));
-        if ($code !== $expectedCode) {
+        // Verify the code with drift tolerance
+        if (!$this->verifyTOTP(base64_decode($secret), $code)) {
             $this->setFlash('error', 'Invalid verification code');
             $this->redirect('/profile/2fa');
             return;
@@ -437,11 +436,10 @@ class ProfileController extends BaseController
     }
 
     /**
-     * Generate TOTP code from secret
+     * Generate TOTP code from secret for a specific time window
      */
-    private function generateTOTP(string $secret): string
+    private function generateTOTPForTime(string $secret, int $time): string
     {
-        $time = floor(time() / 30);
         $binaryTime = pack('N*', 0) . pack('N*', $time);
         
         // Decode base32 secret
@@ -457,6 +455,33 @@ class ProfileController extends BaseController
         ) % 1000000;
 
         return str_pad((string) $code, 6, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Generate TOTP code from secret (current window)
+     */
+    private function generateTOTP(string $secret): string
+    {
+        $time = floor(time() / 30);
+        return $this->generateTOTPForTime($secret, $time);
+    }
+
+    /**
+     * Verify TOTP code with drift tolerance (checks current, previous, and next window)
+     */
+    private function verifyTOTP(string $secret, string $code): bool
+    {
+        $currentTime = floor(time() / 30);
+        
+        // Check current window and +/- 1 window for clock drift tolerance (30-60 seconds)
+        for ($offset = -1; $offset <= 1; $offset++) {
+            $expectedCode = $this->generateTOTPForTime($secret, $currentTime + $offset);
+            if ($code === $expectedCode) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     /**

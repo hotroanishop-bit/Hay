@@ -314,32 +314,43 @@ class AdminController extends BaseController
             return;
         }
 
-        // Update deposit status
-        $this->depositModel->updateStatus($id, 'approved', $admin['id']);
+        // Wrap all operations in a database transaction to prevent partial state on failure
+        try {
+            $this->depositModel->beginTransaction();
 
-        // Add amount to user's balance
-        $this->userModel->updateBalance($deposit['user_id'], $deposit['amount']);
+            // Update deposit status
+            $this->depositModel->updateStatus($id, 'approved', $admin['id']);
 
-        // Create transaction record
-        $this->transactionModel->createCredit(
-            $deposit['user_id'],
-            $deposit['amount'],
-            'Deposit approved - Ref: ' . $deposit['reference_code'],
-            ['reference_id' => $deposit['reference_code'], 'payment_method' => 'bank_transfer']
-        );
+            // Add amount to user's balance
+            $this->userModel->updateBalance($deposit['user_id'], $deposit['amount']);
 
-        // Log audit action
-        $this->auditLogModel->logAction(
-            $admin['id'],
-            'deposit_approved',
-            'deposit',
-            $id,
-            ['status' => 'pending'],
-            ['status' => 'approved', 'amount' => $deposit['amount']],
-            $this->getClientIP()
-        );
+            // Create transaction record
+            $this->transactionModel->createCredit(
+                $deposit['user_id'],
+                $deposit['amount'],
+                'Deposit approved - Ref: ' . $deposit['reference_code'],
+                ['reference_id' => $deposit['reference_code'], 'payment_method' => 'bank_transfer']
+            );
 
-        $this->setFlash('success', 'Deposit approved. $' . number_format($deposit['amount'], 2) . ' added to user balance.');
+            // Log audit action
+            $this->auditLogModel->logAction(
+                $admin['id'],
+                'deposit_approved',
+                'deposit',
+                $id,
+                ['status' => 'pending'],
+                ['status' => 'approved', 'amount' => $deposit['amount']],
+                $this->getClientIP()
+            );
+
+            $this->depositModel->commit();
+
+            $this->setFlash('success', 'Deposit approved. $' . number_format($deposit['amount'], 2) . ' added to user balance.');
+        } catch (Exception $e) {
+            $this->depositModel->rollback();
+            $this->setFlash('error', 'Failed to approve deposit. Please try again.');
+        }
+
         $this->redirect('/admin/deposits/' . $id);
     }
 

@@ -188,6 +188,21 @@ class AuthController extends BaseController
             return;
         }
 
+        // Rate limit: 1 request per 60 seconds per session
+        $sessionKey = 'last_password_reset_request';
+        $lastRequest = $_SESSION[$sessionKey] ?? 0;
+        $cooldownSeconds = 60;
+        
+        if ($lastRequest > 0 && (time() - $lastRequest) < $cooldownSeconds) {
+            $remainingSeconds = $cooldownSeconds - (time() - $lastRequest);
+            $this->setFlash('error', "Please wait {$remainingSeconds} seconds before requesting another password reset.");
+            $this->redirect('/forgot-password');
+            return;
+        }
+
+        // Update last request time
+        $_SESSION[$sessionKey] = time();
+
         // Send reset email (returns true even if user not found to prevent enumeration)
         $this->passwordResetService->sendResetEmail($email);
 
@@ -315,6 +330,21 @@ class AuthController extends BaseController
 
         // Also allow resending by email for non-logged-in users
         $email = $_POST['email'] ?? '';
+
+        // Rate limit: 1 request per 60 seconds per session
+        $sessionKey = 'last_verification_resend_request';
+        $lastRequest = $_SESSION[$sessionKey] ?? 0;
+        $cooldownSeconds = 60;
+        
+        if ($lastRequest > 0 && (time() - $lastRequest) < $cooldownSeconds) {
+            $remainingSeconds = $cooldownSeconds - (time() - $lastRequest);
+            $this->setFlash('error', "Please wait {$remainingSeconds} seconds before requesting another verification email.");
+            $this->redirect('/verify-email');
+            return;
+        }
+
+        // Update last request time
+        $_SESSION[$sessionKey] = time();
 
         if ($user) {
             if ($user['email_verified_at'] !== null) {
