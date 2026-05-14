@@ -72,4 +72,36 @@ class NotificationService
     {
         return $this->notificationModel->markAllRead($userId);
     }
+
+    /**
+     * Get paginated notifications for a user with filter
+     */
+    public function getForUser(int $userId, int $page = 1, int $perPage = 20, string $filter = 'all'): array
+    {
+        return $this->notificationModel->getForUserPaginated($userId, $page, $perPage, $filter);
+    }
+
+    /**
+     * Get notification counts by type for a user
+     */
+    public function getCounts(int $userId): array
+    {
+        return $this->notificationModel->getCounts($userId);
+    }
+
+    /**
+     * Delete a notification
+     */
+    public function delete(int $notificationId): bool
+    {
+        return $this->notificationModel->delete($notificationId);
+    }
+
+    /**
+     * Delete all read notifications for a user
+     */
+    public function deleteRead(int $userId): bool
+    {
+        return $this->notificationModel->deleteRead($userId);
+    }
 }

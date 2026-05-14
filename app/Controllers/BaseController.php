@@ -78,4 +78,33 @@ class BaseController
             'message' => $message
         ];
     }
+
+    /**
+     * Return a JSON response
+     *
+     * @param array $data Data to encode as JSON
+     * @param int $statusCode HTTP status code
+     * @return void
+     */
+    protected function json(array $data, int $statusCode = 200): void
+    {
+        http_response_code($statusCode);
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
+    }
+
+    /**
+     * Return a 404 Not Found response
+     *
+     * @return void
+     */
+    protected function notFound(): void
+    {
+        http_response_code(404);
+        $this->render('errors/404', [
+            'pageTitle' => 'Page Not Found',
+            'currentPage' => ''
+        ]);
+    }
 }

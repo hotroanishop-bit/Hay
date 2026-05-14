@@ -682,6 +682,74 @@ $routes = [
         'action' => 'deleteModelPricing',
         'middleware' => [AdminMiddleware::class]
     ],
+
+    // =====================
+    // Theme Routes (Public - saves to session/user)
+    // =====================
+    [
+        'method' => 'POST',
+        'path' => '/theme/set',
+        'controller' => ThemeController::class,
+        'action' => 'set',
+        'middleware' => []
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/theme/variables',
+        'controller' => ThemeController::class,
+        'action' => 'getVariables',
+        'middleware' => []
+    ],
+
+    // =====================
+    // Custom Pages Routes (Public)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/pages',
+        'controller' => PageController::class,
+        'action' => 'index',
+        'middleware' => []
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/page/{slug}',
+        'controller' => PageController::class,
+        'action' => 'show',
+        'middleware' => []
+    ],
+
+    // =====================
+    // Notifications Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/notifications',
+        'controller' => NotificationController::class,
+        'action' => 'index',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/notifications/{id}/read',
+        'controller' => NotificationController::class,
+        'action' => 'markRead',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/notifications/read-all',
+        'controller' => NotificationController::class,
+        'action' => 'markAllRead',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/notifications/{id}/delete',
+        'controller' => NotificationController::class,
+        'action' => 'delete',
+        'middleware' => [AuthMiddleware::class]
+    ],
 ];
 
 return $routes;

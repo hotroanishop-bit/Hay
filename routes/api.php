@@ -71,6 +71,106 @@ $routes = [
         'action' => 'listModels',
         'middleware' => [ApiAuthMiddleware::class, ApiRateLimitMiddleware::class]
     ],
+
+    // =====================
+    // Notification API Routes
+    // =====================
+    
+    /**
+     * Get unread notification count
+     * GET /api/notifications/unread-count
+     */
+    [
+        'method' => 'GET',
+        'path' => '/api/notifications/unread-count',
+        'controller' => NotificationController::class,
+        'action' => 'getUnreadCount',
+        'middleware' => []
+    ],
+
+    /**
+     * Get recent notifications
+     * GET /api/notifications/recent
+     */
+    [
+        'method' => 'GET',
+        'path' => '/api/notifications/recent',
+        'controller' => NotificationController::class,
+        'action' => 'getRecent',
+        'middleware' => []
+    ],
+
+    /**
+     * Get notification counts by type
+     * GET /api/notifications/counts
+     */
+    [
+        'method' => 'GET',
+        'path' => '/api/notifications/counts',
+        'controller' => NotificationController::class,
+        'action' => 'getCounts',
+        'middleware' => []
+    ],
+
+    /**
+     * Get paginated notifications list
+     * GET /api/notifications
+     */
+    [
+        'method' => 'GET',
+        'path' => '/api/notifications',
+        'controller' => NotificationController::class,
+        'action' => 'list',
+        'middleware' => []
+    ],
+
+    /**
+     * Mark notification as read
+     * POST /api/notifications/{id}/read
+     */
+    [
+        'method' => 'POST',
+        'path' => '/api/notifications/{id}/read',
+        'controller' => NotificationController::class,
+        'action' => 'markRead',
+        'middleware' => []
+    ],
+
+    /**
+     * Mark all notifications as read
+     * POST /api/notifications/mark-all-read
+     */
+    [
+        'method' => 'POST',
+        'path' => '/api/notifications/mark-all-read',
+        'controller' => NotificationController::class,
+        'action' => 'markAllRead',
+        'middleware' => []
+    ],
+
+    /**
+     * Delete a notification
+     * DELETE /api/notifications/{id}
+     */
+    [
+        'method' => 'DELETE',
+        'path' => '/api/notifications/{id}',
+        'controller' => NotificationController::class,
+        'action' => 'delete',
+        'middleware' => []
+    ],
+
+    /**
+     * Delete all read notifications
+     * DELETE /api/notifications/delete-read
+     */
+    [
+        'method' => 'DELETE',
+        'path' => '/api/notifications/delete-read',
+        'controller' => NotificationController::class,
+        'action' => 'deleteRead',
+        'middleware' => []
+    ],
 ];
 
 return $routes;
