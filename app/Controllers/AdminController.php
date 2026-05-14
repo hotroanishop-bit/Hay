@@ -3335,4 +3335,404 @@ class AdminController extends BaseController
         $this->setFlash('success', 'Changelog entry deleted successfully');
         $this->redirect('/admin/changelogs');
     }
+
+    // =====================
+    // Email Templates Management
+    // =====================
+
+    /**
+     * List all email templates
+     */
+    public function emailTemplates(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $emailTemplateModel = new EmailTemplate();
+        $templates = $emailTemplateModel->getAll();
+        $stats = $emailTemplateModel->getStats();
+
+        $this->currentPage = 'admin-email-templates';
+        $this->render('admin/email_templates', [
+            'pageTitle' => 'Admin - Email Templates',
+            'currentPage' => $this->currentPage,
+            'templates' => $templates,
+            'stats' => $stats
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Show edit email template form
+     */
+    public function editEmailTemplate(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $emailTemplateModel = new EmailTemplate();
+        $template = $emailTemplateModel->find($id);
+
+        if (!$template) {
+            $this->setFlash('error', 'Email template not found');
+            $this->redirect('/admin/email-templates');
+            return;
+        }
+
+        $this->currentPage = 'admin-email-templates';
+        $this->render('admin/email_template_form', [
+            'pageTitle' => 'Admin - Edit Email Template',
+            'currentPage' => $this->currentPage,
+            'template' => $template
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Update email template
+     */
+    public function updateEmailTemplate(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $emailTemplateModel = new EmailTemplate();
+        $template = $emailTemplateModel->find($id);
+
+        if (!$template) {
+            $this->setFlash('error', 'Email template not found');
+            $this->redirect('/admin/email-templates');
+            return;
+        }
+
+        $subject = trim($_POST['subject'] ?? '');
+        $body = $_POST['body'] ?? '';
+        $isActive = isset($_POST['is_active']) ? 1 : 0;
+
+        if (empty($subject) || empty($body)) {
+            $this->setFlash('error', 'Subject and body are required');
+            $this->redirect('/admin/email-templates/' . $id . '/edit');
+            return;
+        }
+
+        $emailTemplateModel->updateTemplate($id, [
+            'subject' => $subject,
+            'body' => $body,
+            'is_active' => $isActive
+        ]);
+
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'email_template_updated',
+            'email_template',
+            $id,
+            ['subject' => $template['subject']],
+            ['subject' => $subject],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Email template updated successfully');
+        $this->redirect('/admin/email-templates');
+    }
+
+    /**
+     * Reset email template to default
+     */
+    public function resetEmailTemplate(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $emailTemplateModel = new EmailTemplate();
+        $template = $emailTemplateModel->find($id);
+
+        if (!$template) {
+            $this->setFlash('error', 'Email template not found');
+            $this->redirect('/admin/email-templates');
+            return;
+        }
+
+        $result = $emailTemplateModel->resetToDefault($id);
+
+        if ($result) {
+            $this->auditLogModel->logAction(
+                $admin['id'],
+                'email_template_reset',
+                'email_template',
+                $id,
+                null,
+                ['name' => $template['name']],
+                $this->getClientIP()
+            );
+            $this->setFlash('success', 'Email template reset to default');
+        } else {
+            $this->setFlash('error', 'Could not reset template. Default not found.');
+        }
+
+        $this->redirect('/admin/email-templates');
+    }
+
+    // =====================
+    // Incident Management
+    // =====================
+
+    /**
+     * List all incidents
+     */
+    public function incidents(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $incidentModel = new Incident();
+        $incidents = $incidentModel->getAll();
+        $stats = $incidentModel->getStats();
+
+        $this->currentPage = 'admin-incidents';
+        $this->render('admin/incidents', [
+            'pageTitle' => 'Admin - Incidents',
+            'currentPage' => $this->currentPage,
+            'incidents' => $incidents,
+            'stats' => $stats
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Show create incident form
+     */
+    public function createIncident(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $this->currentPage = 'admin-incidents';
+        $this->render('admin/incident_form', [
+            'pageTitle' => 'Admin - Report Incident',
+            'currentPage' => $this->currentPage,
+            'incident' => null
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Store new incident
+     */
+    public function storeIncident(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+
+        $title = trim($_POST['title'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $severity = trim($_POST['severity'] ?? 'minor');
+        $status = trim($_POST['status'] ?? 'investigating');
+        $affectedComponents = $_POST['affected_components'] ?? [];
+        $startedAt = !empty($_POST['started_at']) ? $_POST['started_at'] : null;
+
+        if (empty($title)) {
+            $this->setFlash('error', 'Title is required');
+            $this->redirect('/admin/incidents/create');
+            return;
+        }
+
+        if (!in_array($severity, ['minor', 'major', 'critical'])) {
+            $severity = 'minor';
+        }
+
+        if (!in_array($status, ['investigating', 'identified', 'monitoring', 'resolved'])) {
+            $status = 'investigating';
+        }
+
+        $incidentModel = new Incident();
+        $id = $incidentModel->createIncident([
+            'title' => $title,
+            'description' => $description,
+            'severity' => $severity,
+            'status' => $status,
+            'affected_components' => $affectedComponents,
+            'started_at' => $startedAt
+        ]);
+
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'incident_created',
+            'incident',
+            $id,
+            null,
+            ['title' => $title, 'severity' => $severity],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Incident reported successfully');
+        $this->redirect('/admin/incidents');
+    }
+
+    /**
+     * Show edit incident form
+     */
+    public function editIncident(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $incidentModel = new Incident();
+        $incident = $incidentModel->find($id);
+
+        if (!$incident) {
+            $this->setFlash('error', 'Incident not found');
+            $this->redirect('/admin/incidents');
+            return;
+        }
+
+        $this->currentPage = 'admin-incidents';
+        $this->render('admin/incident_form', [
+            'pageTitle' => 'Admin - Edit Incident',
+            'currentPage' => $this->currentPage,
+            'incident' => $incident
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Update incident
+     */
+    public function updateIncident(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $incidentModel = new Incident();
+        $incident = $incidentModel->find($id);
+
+        if (!$incident) {
+            $this->setFlash('error', 'Incident not found');
+            $this->redirect('/admin/incidents');
+            return;
+        }
+
+        $title = trim($_POST['title'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $severity = trim($_POST['severity'] ?? 'minor');
+        $status = trim($_POST['status'] ?? 'investigating');
+        $affectedComponents = $_POST['affected_components'] ?? [];
+        $updateMessage = trim($_POST['update_message'] ?? '');
+
+        if (empty($title)) {
+            $this->setFlash('error', 'Title is required');
+            $this->redirect('/admin/incidents/' . $id . '/edit');
+            return;
+        }
+
+        $incidentModel->updateIncident($id, [
+            'title' => $title,
+            'description' => $description,
+            'severity' => $severity,
+            'status' => $status,
+            'affected_components' => $affectedComponents
+        ]);
+
+        // Add update to timeline if provided
+        if (!empty($updateMessage)) {
+            $incidentModel->addUpdate($id, $updateMessage, $status);
+        }
+
+        // If status changed to resolved, set resolved_at
+        if ($status === 'resolved' && $incident['status'] !== 'resolved') {
+            $incidentModel->resolve($id);
+        }
+
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'incident_updated',
+            'incident',
+            $id,
+            ['status' => $incident['status']],
+            ['status' => $status, 'title' => $title],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Incident updated successfully');
+        $this->redirect('/admin/incidents');
+    }
+
+    /**
+     * Resolve incident
+     */
+    public function resolveIncident(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $incidentModel = new Incident();
+        $incident = $incidentModel->find($id);
+
+        if (!$incident) {
+            $this->setFlash('error', 'Incident not found');
+            $this->redirect('/admin/incidents');
+            return;
+        }
+
+        $incidentModel->resolve($id);
+        $incidentModel->addUpdate($id, 'This incident has been resolved.', 'resolved');
+
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'incident_resolved',
+            'incident',
+            $id,
+            ['status' => $incident['status']],
+            ['status' => 'resolved'],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Incident marked as resolved');
+        $this->redirect('/admin/incidents');
+    }
+
+    /**
+     * Delete incident
+     */
+    public function deleteIncident(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $incidentModel = new Incident();
+        $incident = $incidentModel->find($id);
+
+        if (!$incident) {
+            $this->setFlash('error', 'Incident not found');
+            $this->redirect('/admin/incidents');
+            return;
+        }
+
+        $incidentModel->delete($id);
+
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'incident_deleted',
+            'incident',
+            $id,
+            ['title' => $incident['title']],
+            null,
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Incident deleted');
+        $this->redirect('/admin/incidents');
+    }
 }

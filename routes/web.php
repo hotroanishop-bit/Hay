@@ -1261,6 +1261,109 @@ $routes = [
         'action' => 'transactions',
         'middleware' => [AuthMiddleware::class]
     ],
+
+    // =====================
+    // Status Page (Public)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/status',
+        'controller' => StatusController::class,
+        'action' => 'index',
+        'middleware' => []
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/api/health',
+        'controller' => StatusController::class,
+        'action' => 'checkHealth',
+        'middleware' => []
+    ],
+
+    // =====================
+    // Admin Email Templates Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/email-templates',
+        'controller' => AdminController::class,
+        'action' => 'emailTemplates',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/email-templates/{id}/edit',
+        'controller' => AdminController::class,
+        'action' => 'editEmailTemplate',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/email-templates/{id}/update',
+        'controller' => AdminController::class,
+        'action' => 'updateEmailTemplate',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/email-templates/{id}/reset',
+        'controller' => AdminController::class,
+        'action' => 'resetEmailTemplate',
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    // =====================
+    // Admin Incidents Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/incidents',
+        'controller' => AdminController::class,
+        'action' => 'incidents',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/incidents/create',
+        'controller' => AdminController::class,
+        'action' => 'createIncident',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/incidents',
+        'controller' => AdminController::class,
+        'action' => 'storeIncident',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/incidents/{id}/edit',
+        'controller' => AdminController::class,
+        'action' => 'editIncident',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/incidents/{id}/update',
+        'controller' => AdminController::class,
+        'action' => 'updateIncident',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/incidents/{id}/resolve',
+        'controller' => AdminController::class,
+        'action' => 'resolveIncident',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/incidents/{id}/delete',
+        'controller' => AdminController::class,
+        'action' => 'deleteIncident',
+        'middleware' => [AdminMiddleware::class]
+    ],
 ];
 
 return $routes;

@@ -7,6 +7,7 @@
 class MailService
 {
     private array $config;
+    private ?EmailTemplate $emailTemplateModel = null;
 
     public function __construct()
     {
@@ -14,17 +15,64 @@ class MailService
     }
 
     /**
-     * Send an email using a template
+     * Get email template model (lazy load)
+     */
+    private function getEmailTemplateModel(): EmailTemplate
+    {
+        if ($this->emailTemplateModel === null) {
+            $this->emailTemplateModel = new EmailTemplate();
+        }
+        return $this->emailTemplateModel;
+    }
+
+    /**
+     * Send email using database template
+     */
+    public function sendWithTemplate(string $to, string $templateName, array $variables = []): bool
+    {
+        $template = $this->getEmailTemplateModel()->render($templateName, $variables);
+        
+        if (!$template) {
+            error_log("Email template not found: {$templateName}");
+            return false;
+        }
+
+        return $this->sendRaw($to, $template['subject'], $template['body']);
+    }
+
+    /**
+     * Send raw email with subject and body
+     */
+    public function sendRaw(string $to, string $subject, string $body): bool
+    {
+        $headers = $this->buildHeaders();
+
+        switch ($this->config['driver']) {
+            case 'smtp':
+                return $this->sendViaSMTP($to, $subject, $body, $headers);
+            case 'sendmail':
+                return $this->sendViaSendmail($to, $subject, $body, $headers);
+            case 'mail':
+            default:
+                return mail($to, $subject, $body, $headers);
+        }
+    }
+
+    /**
+     * Send an email using a template (legacy method - uses file templates)
      */
     public function send(string $to, string $subject, string $template, array $data = []): bool
     {
-        // Load template
-        $body = $this->renderTemplate($template, $data);
+        // First try database template
+        $dbTemplate = $this->getEmailTemplateModel()->render($template, $data);
+        if ($dbTemplate) {
+            return $this->sendRaw($to, $dbTemplate['subject'], $dbTemplate['body']);
+        }
 
-        // Build headers
+        // Fallback to file-based template
+        $body = $this->renderTemplate($template, $data);
         $headers = $this->buildHeaders();
 
-        // Send based on configured driver
         switch ($this->config['driver']) {
             case 'smtp':
                 return $this->sendViaSMTP($to, $subject, $body, $headers);

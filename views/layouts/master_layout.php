@@ -4,7 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Hay">
     <title><?php echo $pageTitle ?? 'API Keys Dashboard'; ?></title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512x512.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-72x72.png">
     
     <!-- CSS Loading Order: variables -> themes -> components -> global -> layout -> page-specific -->
     <link rel="stylesheet" href="/css/variables.css">
@@ -63,12 +78,16 @@
     
     <?php require VIEWS_PATH . '/partials/footer.php'; ?>
     
-    <!-- JavaScript Loading Order: theme-switcher (must be first) -> bottom-sheet -> notifications -> charts -> global -> page-specific -->
+    <!-- PWA Install Prompt -->
+    <?php require VIEWS_PATH . '/partials/pwa-install-prompt.php'; ?>
+    
+    <!-- JavaScript Loading Order: theme-switcher (must be first) -> bottom-sheet -> notifications -> charts -> global -> pwa -> page-specific -->
     <script src="/js/theme-switcher.js"></script>
     <script src="/js/bottom-sheet.js"></script>
     <script src="/js/notifications.js"></script>
     <script src="/js/charts.js"></script>
     <script src="/js/global.js"></script>
+    <script src="/js/pwa.js"></script>
     
     <!-- Dynamic page-specific JS -->
     <?php if (!empty($pageJsFiles)): ?>
