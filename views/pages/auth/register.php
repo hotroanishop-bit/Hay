@@ -18,6 +18,18 @@
 
         <form action="/register" method="POST" class="auth-form" id="registerForm">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+            <?php if (!empty($referralCode)): ?>
+            <input type="hidden" name="ref" value="<?= htmlspecialchars($referralCode) ?>">
+            <div class="referral-notice">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span><?php echo __('auth.referred_signup', 'You were referred by a friend!'); ?></span>
+            </div>
+            <?php endif; ?>
 
             <div class="form-group">
                 <label for="name" class="form-label"><?php echo __('auth.full_name', 'Full Name'); ?></label>
@@ -144,6 +156,24 @@
 /* Auth Form */
 .auth-form .form-group {
     margin-bottom: var(--space-5);
+}
+
+/* Referral Notice */
+.referral-notice {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-5);
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+    border-radius: var(--radius-md);
+    color: var(--color-success, #28a745);
+    font-size: var(--font-size-sm);
+}
+
+.referral-notice svg {
+    flex-shrink: 0;
 }
 
 /* Input with Icon */

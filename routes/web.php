@@ -434,6 +434,31 @@ $routes = [
     ],
 
     // =====================
+    // Referral Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/referral',
+        'controller' => ReferralController::class,
+        'action' => 'index',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/referral/generate',
+        'controller' => ReferralController::class,
+        'action' => 'generateCode',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/referral/withdraw',
+        'controller' => ReferralController::class,
+        'action' => 'withdraw',
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    // =====================
     // Admin Routes (Admin Required)
     // =====================
     [

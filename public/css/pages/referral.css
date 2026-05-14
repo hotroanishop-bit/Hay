@@ -1,0 +1,275 @@
+/**
+ * Referral Page Styles
+ */
+
+/* Referral Link Container */
+.referral-link-container {
+    margin-bottom: 1rem;
+}
+
+.referral-link-input {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+}
+
+.referral-link-input .form-control {
+    flex: 1;
+    font-family: monospace;
+    font-size: 0.9rem;
+    background: var(--bg-secondary, #f8f9fa);
+    border: 1px solid var(--border-color, #e9ecef);
+}
+
+.referral-link-input .copy-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    padding: 0.5rem 1rem;
+}
+
+.referral-link-input .copy-btn svg {
+    flex-shrink: 0;
+}
+
+/* Referral Code Display */
+.referral-code-display {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.referral-code {
+    font-family: monospace;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-color, #007bff);
+    background: var(--bg-secondary, #f8f9fa);
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    letter-spacing: 1px;
+}
+
+/* Stats Grid */
+.stats-grid-4 {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.stat-card-highlight {
+    border: 2px solid var(--primary-color, #007bff);
+    background: linear-gradient(135deg, rgba(0, 123, 255, 0.05) 0%, transparent 100%);
+}
+
+/* Withdraw Card */
+.withdraw-card {
+    background: linear-gradient(135deg, var(--success-light, #d4edda) 0%, var(--bg-primary, #fff) 100%);
+    border: 1px solid var(--success-color, #28a745);
+}
+
+.withdraw-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.withdraw-info h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    color: var(--text-muted, #6c757d);
+}
+
+.withdraw-amount {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--success-color, #28a745);
+}
+
+.withdraw-content .btn-success {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* User Info in Table */
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-weight: 500;
+}
+
+.user-email {
+    font-size: 0.85rem;
+}
+
+.commission-amount {
+    font-weight: 600;
+    color: var(--success-color, #28a745);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-icon {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+    color: var(--text-muted, #6c757d);
+    opacity: 0.5;
+}
+
+.empty-state h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary, #212529);
+}
+
+.empty-state p {
+    margin: 0;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* How It Works */
+.how-it-works {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.step {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary, #f8f9fa);
+    border-radius: 8px;
+}
+
+.step-number {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color, #007bff);
+    color: white;
+    font-weight: 700;
+    font-size: 1.2rem;
+    border-radius: 50%;
+}
+
+.step-content h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+}
+
+.step-content p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-muted, #6c757d);
+}
+
+/* Pagination */
+.pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color, #e9ecef);
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.pagination-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border-color, #e9ecef);
+    border-radius: 6px;
+    color: var(--text-primary, #212529);
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.pagination-btn:hover {
+    background: var(--primary-color, #007bff);
+    border-color: var(--primary-color, #007bff);
+    color: white;
+}
+
+.pagination-info {
+    font-size: 0.9rem;
+    color: var(--text-muted, #6c757d);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .referral-link-input {
+        flex-direction: column;
+    }
+    
+    .referral-link-input .copy-btn {
+        justify-content: center;
+    }
+    
+    .withdraw-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .withdraw-content .btn-success {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .how-it-works {
+        grid-template-columns: 1fr;
+    }
+    
+    .step {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .step-number {
+        margin: 0 auto;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .stat-card-highlight {
+        background: linear-gradient(135deg, rgba(0, 123, 255, 0.1) 0%, transparent 100%);
+    }
+    
+    .withdraw-card {
+        background: linear-gradient(135deg, rgba(40, 167, 69, 0.15) 0%, var(--bg-primary, #1a1a1a) 100%);
+    }
+}
+
+/* Dark theme class support */
+.dark-theme .stat-card-highlight,
+[data-theme="dark"] .stat-card-highlight {
+    background: linear-gradient(135deg, rgba(0, 123, 255, 0.1) 0%, transparent 100%);
+}
+
+.dark-theme .withdraw-card,
+[data-theme="dark"] .withdraw-card {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.15) 0%, var(--bg-primary, #1a1a1a) 100%);
+}

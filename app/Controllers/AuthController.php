@@ -91,10 +91,17 @@ class AuthController extends BaseController
             return;
         }
 
+        // Store referral code in session if present
+        $referralCode = $_GET['ref'] ?? '';
+        if (!empty($referralCode)) {
+            $_SESSION['referral_code'] = $referralCode;
+        }
+
         $this->currentPage = 'register';
         $this->render('auth/register', [
             'pageTitle' => 'Create Account',
-            'currentPage' => $this->currentPage
+            'currentPage' => $this->currentPage,
+            'referralCode' => $referralCode ?: ($_SESSION['referral_code'] ?? '')
         ], ['auth'], ['auth']);
     }
 
@@ -107,6 +114,9 @@ class AuthController extends BaseController
         $email = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
         $passwordConfirm = $_POST['password_confirm'] ?? '';
+        
+        // Get referral code from URL or session
+        $referralCode = $_GET['ref'] ?? $_POST['ref'] ?? $_SESSION['referral_code'] ?? '';
 
         // Basic validation
         $errors = [];
@@ -129,7 +139,7 @@ class AuthController extends BaseController
 
         if (!empty($errors)) {
             $this->setFlash('error', implode('. ', $errors));
-            $this->redirect('/register');
+            $this->redirect('/register' . ($referralCode ? '?ref=' . urlencode($referralCode) : ''));
             return;
         }
 
@@ -143,6 +153,14 @@ class AuthController extends BaseController
             // Get the newly created user
             $user = $this->userModel->find($userId);
 
+            // Track referral if code was provided
+            if (!empty($referralCode)) {
+                $referralService = new ReferralService();
+                $referralService->trackReferral($userId, $referralCode);
+                // Clear from session
+                unset($_SESSION['referral_code']);
+            }
+
             // Send verification email
             if ($user) {
                 $this->emailVerificationService->sendVerificationEmail($user);
@@ -153,7 +171,7 @@ class AuthController extends BaseController
             $this->redirect('/verify-email');
         } catch (Exception $e) {
             $this->setFlash('error', $e->getMessage());
-            $this->redirect('/register');
+            $this->redirect('/register' . ($referralCode ? '?ref=' . urlencode($referralCode) : ''));
         }
     }
 
