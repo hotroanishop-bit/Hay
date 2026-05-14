@@ -172,7 +172,7 @@ $routes = [
     ],
     [
         'method' => 'POST',
-        'path' => '/profile/update',
+        'path' => '/profile',
         'controller' => ProfileController::class,
         'action' => 'update',
         'middleware' => [AuthMiddleware::class]
