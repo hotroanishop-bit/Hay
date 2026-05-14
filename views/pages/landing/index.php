@@ -262,6 +262,7 @@
 <a href="#features">Features</a>
 <a href="#pricing">Pricing</a>
 <a href="/docs">Documentation</a>
+<a href="/changelog">Changelog</a>
 </div>
 <div class="footer-links">
 <h4>Company</h4>

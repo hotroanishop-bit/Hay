@@ -25,6 +25,7 @@ class AdminController extends BaseController
     private Coupon $couponModel;
     private CouponUsage $couponUsageModel;
     private WebhookService $webhookService;
+    private Changelog $changelogModel;
 
     public function __construct()
     {
@@ -49,6 +50,7 @@ class AdminController extends BaseController
         $this->couponModel = new Coupon();
         $this->couponUsageModel = new CouponUsage();
         $this->webhookService = new WebhookService();
+        $this->changelogModel = new Changelog();
     }
 
 
@@ -3101,5 +3103,236 @@ class AdminController extends BaseController
             'stats' => $stats['stats'],
             'usages' => $usages
         ], ['admin'], ['admin']);
+    }
+
+    // =====================
+    // Changelog Management
+    // =====================
+
+    /**
+     * List all changelog entries
+     */
+    public function changelogs(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $changelogs = $this->changelogModel->getAll();
+        $stats = $this->changelogModel->getStats();
+
+        $this->currentPage = 'admin-changelogs';
+        $this->render('admin/changelogs', [
+            'pageTitle' => 'Admin - Changelogs',
+            'currentPage' => $this->currentPage,
+            'changelogs' => $changelogs,
+            'stats' => $stats
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Show create changelog form
+     */
+    public function createChangelog(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $versions = $this->changelogModel->getVersions();
+
+        $this->currentPage = 'admin-changelogs';
+        $this->render('admin/changelog_form', [
+            'pageTitle' => 'Admin - Create Changelog',
+            'currentPage' => $this->currentPage,
+            'changelog' => [],
+            'isEdit' => false,
+            'versions' => $versions
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Store new changelog entry
+     */
+    public function storeChangelog(): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        
+        $version = trim($_POST['version'] ?? '');
+        $title = trim($_POST['title'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $type = trim($_POST['type'] ?? 'feature');
+        $publishedAt = !empty($_POST['published_at']) ? $_POST['published_at'] : null;
+        $publishNow = isset($_POST['publish_now']);
+
+        // Validation
+        if (empty($version) || empty($title)) {
+            $this->setFlash('error', 'Version and title are required');
+            $this->redirect('/admin/changelogs/create');
+            return;
+        }
+
+        if (!in_array($type, ['feature', 'fix', 'improvement', 'security'])) {
+            $type = 'feature';
+        }
+
+        // If publish now is clicked, set published_at to now
+        if ($publishNow) {
+            $publishedAt = date('Y-m-d H:i:s');
+        } elseif ($publishedAt) {
+            $publishedAt = date('Y-m-d H:i:s', strtotime($publishedAt));
+        }
+
+        $id = $this->changelogModel->createEntry([
+            'version' => $version,
+            'title' => $title,
+            'description' => $description,
+            'type' => $type,
+            'published_at' => $publishedAt
+        ]);
+
+        // Log audit
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'changelog_created',
+            'changelog',
+            $id,
+            null,
+            ['version' => $version, 'title' => $title, 'type' => $type],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Changelog entry created successfully');
+        $this->redirect('/admin/changelogs');
+    }
+
+    /**
+     * Show edit changelog form
+     */
+    public function editChangelog(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $changelog = $this->changelogModel->find($id);
+
+        if (!$changelog) {
+            $this->setFlash('error', 'Changelog entry not found');
+            $this->redirect('/admin/changelogs');
+            return;
+        }
+
+        $versions = $this->changelogModel->getVersions();
+
+        $this->currentPage = 'admin-changelogs';
+        $this->render('admin/changelog_form', [
+            'pageTitle' => 'Admin - Edit Changelog',
+            'currentPage' => $this->currentPage,
+            'changelog' => $changelog,
+            'isEdit' => true,
+            'versions' => $versions
+        ], ['admin'], ['admin']);
+    }
+
+    /**
+     * Update changelog entry
+     */
+    public function updateChangelog(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $changelog = $this->changelogModel->find($id);
+
+        if (!$changelog) {
+            $this->setFlash('error', 'Changelog entry not found');
+            $this->redirect('/admin/changelogs');
+            return;
+        }
+
+        $version = trim($_POST['version'] ?? '');
+        $title = trim($_POST['title'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $type = trim($_POST['type'] ?? 'feature');
+        $publishedAt = !empty($_POST['published_at']) ? $_POST['published_at'] : null;
+
+        // Validation
+        if (empty($version) || empty($title)) {
+            $this->setFlash('error', 'Version and title are required');
+            $this->redirect('/admin/changelogs/' . $id . '/edit');
+            return;
+        }
+
+        if (!in_array($type, ['feature', 'fix', 'improvement', 'security'])) {
+            $type = 'feature';
+        }
+
+        if ($publishedAt) {
+            $publishedAt = date('Y-m-d H:i:s', strtotime($publishedAt));
+        }
+
+        $this->changelogModel->updateEntry($id, [
+            'version' => $version,
+            'title' => $title,
+            'description' => $description,
+            'type' => $type,
+            'published_at' => $publishedAt
+        ]);
+
+        // Log audit
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'changelog_updated',
+            'changelog',
+            $id,
+            ['version' => $changelog['version'], 'title' => $changelog['title']],
+            ['version' => $version, 'title' => $title, 'type' => $type],
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Changelog entry updated successfully');
+        $this->redirect('/admin/changelogs');
+    }
+
+    /**
+     * Delete changelog entry
+     */
+    public function deleteChangelog(int $id): void
+    {
+        if (!$this->requireAdmin()) {
+            return;
+        }
+
+        $admin = $this->authService->user();
+        $changelog = $this->changelogModel->find($id);
+
+        if (!$changelog) {
+            $this->setFlash('error', 'Changelog entry not found');
+            $this->redirect('/admin/changelogs');
+            return;
+        }
+
+        $this->changelogModel->delete($id);
+
+        // Log audit
+        $this->auditLogModel->logAction(
+            $admin['id'],
+            'changelog_deleted',
+            'changelog',
+            $id,
+            ['version' => $changelog['version'], 'title' => $changelog['title']],
+            null,
+            $this->getClientIP()
+        );
+
+        $this->setFlash('success', 'Changelog entry deleted successfully');
+        $this->redirect('/admin/changelogs');
     }
 }

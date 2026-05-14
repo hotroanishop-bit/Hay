@@ -992,6 +992,52 @@ $routes = [
     ],
 
     // =====================
+    // Admin Changelog Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/changelogs',
+        'controller' => AdminController::class,
+        'action' => 'changelogs',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/changelogs/create',
+        'controller' => AdminController::class,
+        'action' => 'createChangelog',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/changelogs',
+        'controller' => AdminController::class,
+        'action' => 'storeChangelog',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/changelogs/{id}/edit',
+        'controller' => AdminController::class,
+        'action' => 'editChangelog',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/changelogs/{id}/update',
+        'controller' => AdminController::class,
+        'action' => 'updateChangelog',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/changelogs/{id}/delete',
+        'controller' => AdminController::class,
+        'action' => 'deleteChangelog',
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    // =====================
     // User Coupon Routes
     // =====================
     [
@@ -1135,6 +1181,17 @@ $routes = [
         'controller' => WebhookController::class,
         'action' => 'toggle',
         'middleware' => [AuthMiddleware::class]
+    ],
+
+    // =====================
+    // Public Changelog Route
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/changelog',
+        'controller' => ChangelogController::class,
+        'action' => 'index',
+        'middleware' => []
     ],
 ];
 

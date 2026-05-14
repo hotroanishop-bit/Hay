@@ -1,0 +1,303 @@
+/* Changelog Page Styles */
+
+/* Header */
+.changelog-header {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark, #4f46e5) 100%);
+    color: var(--color-white);
+    padding: var(--space-8) var(--space-4);
+    text-align: center;
+}
+
+.changelog-header-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.back-home-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-4);
+    transition: color var(--transition-fast);
+}
+
+.back-home-link:hover {
+    color: var(--color-white);
+}
+
+.changelog-header h1 {
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-bold);
+    margin: 0 0 var(--space-2);
+}
+
+.changelog-header p {
+    font-size: var(--font-size-lg);
+    opacity: 0.9;
+    margin: 0;
+}
+
+/* Main Content */
+.changelog-main {
+    padding: var(--space-8) var(--space-4);
+    min-height: 60vh;
+    background: var(--bg-secondary);
+}
+
+.changelog-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Timeline */
+.changelog-timeline {
+    position: relative;
+}
+
+.timeline-version {
+    position: relative;
+    padding-left: var(--space-8);
+    margin-bottom: var(--space-8);
+}
+
+.timeline-version::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 32px;
+    bottom: 0;
+    width: 2px;
+    background: var(--border-color);
+}
+
+.timeline-version:last-child::before {
+    display: none;
+}
+
+.version-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+    position: relative;
+}
+
+.version-header::before {
+    content: '';
+    position: absolute;
+    left: calc(-1 * var(--space-8) + 4px);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    border: 3px solid var(--bg-secondary);
+    box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+.version-badge {
+    display: inline-block;
+    padding: var(--space-1) var(--space-3);
+    background: var(--color-primary);
+    color: var(--color-white);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    border-radius: var(--radius-full);
+}
+
+.version-date {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+}
+
+/* Version Entries */
+.version-entries {
+    background: var(--surface-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.changelog-entry {
+    display: flex;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.changelog-entry:last-child {
+    border-bottom: none;
+}
+
+/* Entry Type Badges */
+.entry-type {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    height: fit-content;
+}
+
+.entry-type-feature {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.entry-type-fix {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.entry-type-improvement {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
+.entry-type-security {
+    background: rgba(249, 115, 22, 0.1);
+    color: #f97316;
+}
+
+/* Entry Content */
+.entry-content {
+    flex: 1;
+}
+
+.entry-title {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    margin: 0 0 var(--space-1);
+}
+
+.entry-description {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* Empty State */
+.changelog-empty {
+    text-align: center;
+    padding: var(--space-12);
+    background: var(--surface-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+}
+
+.changelog-empty svg {
+    color: var(--text-muted);
+    opacity: 0.5;
+    margin-bottom: var(--space-4);
+}
+
+.changelog-empty h3 {
+    margin: 0 0 var(--space-2);
+    color: var(--text-primary);
+}
+
+.changelog-empty p {
+    margin: 0;
+    color: var(--text-muted);
+}
+
+/* Footer */
+.changelog-footer {
+    background: var(--surface-primary);
+    border-top: 1px solid var(--border-color);
+    padding: var(--space-6) var(--space-4);
+}
+
+.changelog-footer .footer-content {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.changelog-footer p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+}
+
+.footer-links {
+    display: flex;
+    gap: var(--space-4);
+}
+
+.footer-links a {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    transition: color var(--transition-fast);
+}
+
+.footer-links a:hover {
+    color: var(--color-primary);
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .version-header::before {
+    border-color: var(--bg-secondary);
+}
+
+[data-theme="dark"] .entry-type-feature {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="dark"] .entry-type-fix {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+[data-theme="dark"] .entry-type-improvement {
+    background: rgba(34, 197, 94, 0.2);
+}
+
+[data-theme="dark"] .entry-type-security {
+    background: rgba(249, 115, 22, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 639px) {
+    .changelog-header {
+        padding: var(--space-6) var(--space-4);
+    }
+    
+    .changelog-header h1 {
+        font-size: var(--font-size-2xl);
+    }
+    
+    .changelog-main {
+        padding: var(--space-6) var(--space-4);
+    }
+    
+    .timeline-version {
+        padding-left: var(--space-6);
+    }
+    
+    .version-header::before {
+        left: calc(-1 * var(--space-6) + 4px);
+    }
+    
+    .changelog-entry {
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+    
+    .changelog-footer .footer-content {
+        flex-direction: column;
+        gap: var(--space-3);
+        text-align: center;
+    }
+}
