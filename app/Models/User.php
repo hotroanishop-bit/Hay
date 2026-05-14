@@ -17,6 +17,8 @@ class User extends BaseModel
         'two_factor_secret',
         'two_factor_enabled',
         'email_verified_at',
+        'is_banned',
+        'avatar_url',
         'created_at',
         'updated_at'
     ];
@@ -122,5 +124,79 @@ class User extends BaseModel
     {
         $user = $this->find($userId);
         return $user && (bool) $user['is_admin'];
+    }
+
+    /**
+     * Ban a user
+     */
+    public function ban(int $userId): bool
+    {
+        $sql = "UPDATE {$this->table} SET is_banned = 1, updated_at = NOW() WHERE id = :id";
+        return $this->execute($sql, ['id' => $userId]);
+    }
+
+    /**
+     * Unban a user
+     */
+    public function unban(int $userId): bool
+    {
+        $sql = "UPDATE {$this->table} SET is_banned = 0, updated_at = NOW() WHERE id = :id";
+        return $this->execute($sql, ['id' => $userId]);
+    }
+
+    /**
+     * Check if a user is banned
+     */
+    public function isBanned(int $userId): bool
+    {
+        $user = $this->find($userId);
+        return $user && (bool) ($user['is_banned'] ?? false);
+    }
+
+    /**
+     * Update user avatar URL
+     */
+    public function updateAvatar(int $userId, string $url): bool
+    {
+        $sql = "UPDATE {$this->table} SET avatar_url = :url, updated_at = NOW() WHERE id = :id";
+        return $this->execute($sql, ['url' => $url, 'id' => $userId]);
+    }
+
+    /**
+     * Get all users with pagination and search
+     */
+    public function getAllUsers(int $page = 1, int $perPage = 20, ?string $search = null): array
+    {
+        $offset = ($page - 1) * $perPage;
+        $params = [];
+        $whereClause = '';
+        
+        if ($search !== null && $search !== '') {
+            $whereClause = "WHERE (name LIKE :search OR email LIKE :search_email)";
+            $params['search'] = '%' . $search . '%';
+            $params['search_email'] = '%' . $search . '%';
+        }
+        
+        // Count total
+        $countSql = "SELECT COUNT(*) as total FROM {$this->table} {$whereClause}";
+        $countResult = $this->query($countSql, $params);
+        $total = (int) ($countResult[0]['total'] ?? 0);
+        
+        // Get users
+        $sql = "SELECT id, email, name, balance, is_admin, is_banned, avatar_url, email_verified_at, two_factor_enabled, created_at, updated_at 
+                FROM {$this->table} 
+                {$whereClause} 
+                ORDER BY created_at DESC 
+                LIMIT {$perPage} OFFSET {$offset}";
+        
+        $users = $this->query($sql, $params);
+        
+        return [
+            'data' => $users,
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+            'total_pages' => (int) ceil($total / $perPage)
+        ];
     }
 }
