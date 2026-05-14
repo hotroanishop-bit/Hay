@@ -248,6 +248,22 @@ class Router
 // Create router and process request
 $router = new Router($routes);
 
+// Check maintenance mode (skip for login/logout paths to allow admin access)
+$skipMaintenancePaths = ['/login', '/logout', '/forgot-password', '/reset-password'];
+if (!in_array($requestUri, $skipMaintenancePaths) && !str_starts_with($requestUri, '/reset-password/')) {
+    // Initialize services for maintenance check
+    $sessionService = new SessionService();
+    $userModel = new User();
+    $authService = new AuthService($sessionService, $userModel);
+    
+    // Run maintenance middleware
+    $maintenanceMiddleware = new MaintenanceMiddleware($authService);
+    if ($maintenanceMiddleware->handle() === false) {
+        // Maintenance mode blocked the request - response already sent
+        exit;
+    }
+}
+
 // Match the current request
 $match = $router->match($requestMethod, $requestUri);
 
