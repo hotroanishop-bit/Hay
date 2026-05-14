@@ -295,6 +295,45 @@ $routes = [
     ],
 
     // =====================
+    // Deposit Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/billing/deposit',
+        'controller' => DepositController::class,
+        'action' => 'showDeposit',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/billing/deposit',
+        'controller' => DepositController::class,
+        'action' => 'createDeposit',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/billing/deposit/{id}',
+        'controller' => DepositController::class,
+        'action' => 'showDepositDetail',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/billing/pending',
+        'controller' => DepositController::class,
+        'action' => 'pendingDeposits',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/billing/deposit/{id}/cancel',
+        'controller' => DepositController::class,
+        'action' => 'cancelDeposit',
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    // =====================
     // Analytics Routes (Auth Required)
     // =====================
     [
