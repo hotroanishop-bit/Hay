@@ -1,14 +1,14 @@
 <?php
 /**
  * Ticket Controller
- * Handles support ticket management
+ * Handles support ticket management with enhanced features
  */
 
 class TicketController extends BaseController
 {
     private AuthService $authService;
     private AuditService $auditService;
-    private Ticket $ticketModel;
+    private TicketService $ticketService;
 
     public function __construct()
     {
@@ -16,7 +16,7 @@ class TicketController extends BaseController
         $userModel = new User();
         $this->authService = new AuthService($sessionService, $userModel);
         
-        $this->ticketModel = new Ticket();
+        $this->ticketService = new TicketService();
         $this->auditService = new AuditService();
     }
 
@@ -32,15 +32,19 @@ class TicketController extends BaseController
             return;
         }
 
-        $tickets = $this->ticketModel->findByUser($user['id']);
-        $statusCounts = $this->ticketModel->getStatusCounts($user['id']);
+        $status = $_GET['status'] ?? null;
+        $page = (int)($_GET['page'] ?? 1);
+        
+        $tickets = $this->ticketService->getUserTickets($user['id'], $status, $page);
+        $statusCounts = $this->ticketService->getStatusCounts($user['id']);
 
         $this->currentPage = 'tickets';
         $this->render('tickets/index', [
             'pageTitle' => 'Support Tickets',
             'currentPage' => $this->currentPage,
             'tickets' => $tickets,
-            'statusCounts' => $statusCounts
+            'statusCounts' => $statusCounts,
+            'statusFilter' => $status
         ], ['tickets'], ['tickets']);
     }
 
@@ -60,11 +64,8 @@ class TicketController extends BaseController
         $this->render('tickets/create', [
             'pageTitle' => 'Create Ticket',
             'currentPage' => $this->currentPage,
-            'priorities' => [
-                Ticket::PRIORITY_LOW => 'Low',
-                Ticket::PRIORITY_MEDIUM => 'Medium',
-                Ticket::PRIORITY_HIGH => 'High'
-            ]
+            'priorities' => SupportTicket::getPriorities(),
+            'categories' => SupportTicket::getCategories()
         ], ['tickets'], ['tickets']);
     }
 
@@ -82,7 +83,8 @@ class TicketController extends BaseController
 
         $subject = trim($_POST['subject'] ?? '');
         $message = trim($_POST['message'] ?? '');
-        $priority = $_POST['priority'] ?? Ticket::PRIORITY_MEDIUM;
+        $priority = $_POST['priority'] ?? SupportTicket::PRIORITY_MEDIUM;
+        $category = $_POST['category'] ?? SupportTicket::CATEGORY_OTHER;
 
         // Validation
         $errors = [];
@@ -91,8 +93,20 @@ class TicketController extends BaseController
             $errors[] = 'Subject is required';
         }
         
+        if (strlen($subject) > 255) {
+            $errors[] = 'Subject must be less than 255 characters';
+        }
+        
         if (empty($message)) {
             $errors[] = 'Message is required';
+        }
+
+        if (!in_array($priority, array_keys(SupportTicket::getPriorities()))) {
+            $priority = SupportTicket::PRIORITY_MEDIUM;
+        }
+
+        if (!in_array($category, array_keys(SupportTicket::getCategories()))) {
+            $category = SupportTicket::CATEGORY_OTHER;
         }
 
         if (!empty($errors)) {
@@ -102,19 +116,21 @@ class TicketController extends BaseController
         }
 
         try {
-            $ticketId = $this->ticketModel->createTicket($user['id'], [
+            $ticket = $this->ticketService->createTicket($user['id'], [
                 'subject' => $subject,
                 'message' => $message,
-                'priority' => $priority
+                'priority' => $priority,
+                'category' => $category
             ]);
 
             $this->auditService->log($user['id'], 'ticket_created', [
-                'ticket_id' => $ticketId,
+                'ticket_id' => $ticket['id'],
+                'ticket_number' => $ticket['ticket_number'],
                 'subject' => $subject
             ]);
 
-            $this->setFlash('success', 'Ticket created successfully');
-            $this->redirect('/tickets/' . $ticketId);
+            $this->setFlash('success', 'Ticket created successfully! Ticket #' . $ticket['ticket_number']);
+            $this->redirect('/tickets/' . $ticket['id']);
         } catch (Exception $e) {
             $this->setFlash('error', 'Failed to create ticket: ' . $e->getMessage());
             $this->redirect('/tickets/create');
@@ -122,7 +138,7 @@ class TicketController extends BaseController
     }
 
     /**
-     * Show a specific ticket
+     * Show a specific ticket with conversation
      */
     public function show(int $id): void
     {
@@ -133,10 +149,16 @@ class TicketController extends BaseController
             return;
         }
 
-        $ticket = $this->ticketModel->find($id);
-
         // Check ownership
-        if (!$ticket || $ticket['user_id'] !== $user['id']) {
+        if (!$this->ticketService->userOwnsTicket($id, $user['id'])) {
+            $this->setFlash('error', 'Ticket not found');
+            $this->redirect('/tickets');
+            return;
+        }
+
+        $ticket = $this->ticketService->getTicketWithMessages($id, false);
+        
+        if (!$ticket) {
             $this->setFlash('error', 'Ticket not found');
             $this->redirect('/tickets');
             return;
@@ -144,9 +166,11 @@ class TicketController extends BaseController
 
         $this->currentPage = 'tickets';
         $this->render('tickets/show', [
-            'pageTitle' => 'Ticket #' . $id,
+            'pageTitle' => 'Ticket #' . $ticket['ticket_number'],
             'currentPage' => $this->currentPage,
-            'ticket' => $ticket
+            'ticket' => $ticket,
+            'replies' => $ticket['messages'] ?? [],
+            'user' => $user
         ], ['tickets'], ['tickets']);
     }
 
@@ -162,32 +186,23 @@ class TicketController extends BaseController
             return;
         }
 
-        $ticket = $this->ticketModel->find($id);
-
         // Check ownership
-        if (!$ticket || $ticket['user_id'] !== $user['id']) {
+        if (!$this->ticketService->userOwnsTicket($id, $user['id'])) {
             $this->setFlash('error', 'Ticket not found');
             $this->redirect('/tickets');
             return;
         }
 
-        $reply = trim($_POST['reply'] ?? '');
+        $message = trim($_POST['message'] ?? $_POST['reply'] ?? '');
 
-        if (empty($reply)) {
+        if (empty($message)) {
             $this->setFlash('error', 'Reply message is required');
             $this->redirect('/tickets/' . $id);
             return;
         }
 
         try {
-            // Append reply to existing message
-            $newMessage = $ticket['message'] . "\n\n---\n**User Reply (" . date('Y-m-d H:i') . "):**\n" . $reply;
-            
-            $this->ticketModel->update($id, [
-                'message' => $newMessage,
-                'status' => Ticket::STATUS_OPEN,
-                'updated_at' => date('Y-m-d H:i:s')
-            ]);
+            $this->ticketService->addUserReply($id, $user['id'], $message);
 
             $this->auditService->log($user['id'], 'ticket_reply', [
                 'ticket_id' => $id
@@ -196,6 +211,40 @@ class TicketController extends BaseController
             $this->setFlash('success', 'Reply added successfully');
         } catch (Exception $e) {
             $this->setFlash('error', 'Failed to add reply: ' . $e->getMessage());
+        }
+
+        $this->redirect('/tickets/' . $id);
+    }
+
+    /**
+     * Close a ticket (user can close their own tickets)
+     */
+    public function close(int $id): void
+    {
+        $user = $this->authService->user();
+        
+        if (!$user) {
+            $this->redirect('/login');
+            return;
+        }
+
+        // Check ownership
+        if (!$this->ticketService->userOwnsTicket($id, $user['id'])) {
+            $this->setFlash('error', 'Ticket not found');
+            $this->redirect('/tickets');
+            return;
+        }
+
+        try {
+            $this->ticketService->closeTicket($id, $user['id']);
+
+            $this->auditService->log($user['id'], 'ticket_closed', [
+                'ticket_id' => $id
+            ]);
+
+            $this->setFlash('success', 'Ticket closed successfully');
+        } catch (Exception $e) {
+            $this->setFlash('error', 'Failed to close ticket: ' . $e->getMessage());
         }
 
         $this->redirect('/tickets/' . $id);

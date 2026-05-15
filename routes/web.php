@@ -432,6 +432,13 @@ $routes = [
         'action' => 'reply',
         'middleware' => [AuthMiddleware::class]
     ],
+    [
+        'method' => 'POST',
+        'path' => '/tickets/{id}/close',
+        'controller' => TicketController::class,
+        'action' => 'close',
+        'middleware' => [AuthMiddleware::class]
+    ],
 
     // =====================
     // Referral Routes (Auth Required)
@@ -548,29 +555,57 @@ $routes = [
     [
         'method' => 'GET',
         'path' => '/admin/tickets',
-        'controller' => AdminController::class,
-        'action' => 'tickets',
+        'controller' => AdminTicketController::class,
+        'action' => 'index',
         'middleware' => [AdminMiddleware::class]
     ],
     [
         'method' => 'GET',
         'path' => '/admin/tickets/{id}',
-        'controller' => AdminController::class,
-        'action' => 'ticketDetail',
+        'controller' => AdminTicketController::class,
+        'action' => 'show',
         'middleware' => [AdminMiddleware::class]
     ],
     [
         'method' => 'POST',
         'path' => '/admin/tickets/{id}/reply',
-        'controller' => AdminController::class,
-        'action' => 'replyTicket',
+        'controller' => AdminTicketController::class,
+        'action' => 'reply',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/tickets/{id}/status',
+        'controller' => AdminTicketController::class,
+        'action' => 'updateStatus',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/tickets/{id}/assign',
+        'controller' => AdminTicketController::class,
+        'action' => 'assign',
         'middleware' => [AdminMiddleware::class]
     ],
     [
         'method' => 'POST',
         'path' => '/admin/tickets/{id}/close',
-        'controller' => AdminController::class,
-        'action' => 'closeTicket',
+        'controller' => AdminTicketController::class,
+        'action' => 'close',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/tickets/{id}/reopen',
+        'controller' => AdminTicketController::class,
+        'action' => 'reopen',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/tickets/bulk',
+        'controller' => AdminTicketController::class,
+        'action' => 'bulkAction',
         'middleware' => [AdminMiddleware::class]
     ],
     [
