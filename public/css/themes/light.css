@@ -86,6 +86,56 @@
     --scrollbar-track: #f1f5f9;
     --scrollbar-thumb: #cbd5e1;
     --scrollbar-thumb-hover: #94a3b8;
+
+    /* Background */
+    --bg-hover: rgba(0, 0, 0, 0.04);
+
+    /* Border */
+    --border-hover: var(--border-dark);
+
+    /* Card */
+    --card-bg: #ffffff;
+
+    /* Code */
+    --code-bg: #1e293b;
+    --code-color: #f1f5f9;
+    --code-text: #f1f5f9;
+    --code-inline-bg: rgba(99, 102, 241, 0.1);
+    --code-inline-text: #6366f1;
+
+    /* Tab */
+    --tab-bg: #f8fafc;
+
+    /* Table */
+    --table-header-bg: #f8fafc;
+    --table-hover-bg: #f1f5f9;
+
+    /* Text */
+    --text-tertiary: #94a3b8;
+
+    /* Legacy color aliases */
+    --primary: #3b82f6;
+    --primary-dark: #2563eb;
+    --primary-light: #93c5fd;
+    --primary-color: #3b82f6;
+    --primary-bg: rgba(59, 130, 246, 0.1);
+    --primary-rgb: 59, 130, 246;
+
+    --success: #22c55e;
+    --success-light: #dcfce7;
+    --success-color: #22c55e;
+    --success-bg: #dcfce7;
+
+    --warning: #f59e0b;
+    --warning-dark: #d97706;
+    --warning-color: #f59e0b;
+    --warning-bg: #fef3c7;
+
+    --danger: #ef4444;
+    --danger-color: #ef4444;
+    --color-danger: #ef4444;
+    --error-color: #ef4444;
+    --error-bg: #fee2e2;
 }
 
 /* Light theme scrollbar styling */

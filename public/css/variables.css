@@ -279,4 +279,72 @@
     --avatar-size-md: 40px;
     --avatar-size-lg: 48px;
     --avatar-size-xl: 64px;
+
+    /* ================================
+       MISSING ALIASES & COMPONENT VARS
+       ================================ */
+
+    /* Background */
+    --bg-hover: rgba(0, 0, 0, 0.04);
+
+    /* Border */
+    --border-hover: var(--border-dark);
+
+    /* Font family alias */
+    --font-family-sans: var(--font-sans);
+
+    /* Font size alias */
+    --font-size-md: var(--font-size-base);
+
+    /* Card */
+    --card-bg: var(--surface-primary);
+
+    /* Code */
+    --code-bg: var(--bg-inverse);
+    --code-color: var(--text-inverse);
+    --code-text: var(--text-inverse);
+    --code-inline-bg: rgba(99, 102, 241, 0.1);
+    --code-inline-text: var(--color-secondary);
+
+    /* Scrollbar (light default) */
+    --scrollbar-track: #f1f5f9;
+    --scrollbar-thumb: #cbd5e1;
+    --scrollbar-thumb-hover: #94a3b8;
+
+    /* Tab */
+    --tab-bg: var(--bg-tertiary);
+
+    /* Table */
+    --table-header-bg: var(--bg-tertiary);
+    --table-hover-bg: var(--bg-secondary);
+
+    /* Text */
+    --text-tertiary: var(--text-muted);
+
+    /* Legacy color aliases - Primary */
+    --primary: var(--color-primary);
+    --primary-dark: var(--color-primary-dark);
+    --primary-light: var(--color-primary-light);
+    --primary-color: var(--color-primary);
+    --primary-bg: rgba(59, 130, 246, 0.1);
+    --primary-rgb: 59, 130, 246;
+
+    /* Legacy color aliases - Success */
+    --success: var(--color-success);
+    --success-light: var(--color-success-light);
+    --success-color: var(--color-success);
+    --success-bg: var(--color-success-light);
+
+    /* Legacy color aliases - Warning */
+    --warning: var(--color-warning);
+    --warning-dark: var(--color-warning-dark);
+    --warning-color: var(--color-warning);
+    --warning-bg: var(--color-warning-light);
+
+    /* Legacy color aliases - Danger/Error */
+    --danger: var(--color-error);
+    --danger-color: var(--color-error);
+    --color-danger: var(--color-error);
+    --error-color: var(--color-error);
+    --error-bg: var(--color-error-light);
 }
