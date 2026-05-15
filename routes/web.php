@@ -393,6 +393,41 @@ $routes = [
         'action' => 'export',
         'middleware' => [AuthMiddleware::class]
     ],
+    [
+        'method' => 'GET',
+        'path' => '/api/analytics/usage',
+        'controller' => AnalyticsController::class,
+        'action' => 'getUsageData',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/api/analytics/models',
+        'controller' => AnalyticsController::class,
+        'action' => 'getModelBreakdown',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/api/analytics/costs',
+        'controller' => AnalyticsController::class,
+        'action' => 'getCostData',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/api/analytics/stats',
+        'controller' => AnalyticsController::class,
+        'action' => 'getStats',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/api/analytics/hourly',
+        'controller' => AnalyticsController::class,
+        'action' => 'getHourlyDistribution',
+        'middleware' => [AuthMiddleware::class]
+    ],
 
     // =====================
     // Support Tickets Routes (Auth Required)
