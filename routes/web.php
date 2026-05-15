@@ -2008,6 +2008,84 @@ $routes = [
         'action' => 'deleteRead',
         'middleware' => [AuthMiddleware::class]
     ],
+
+    // =====================
+    // Campaign Routes (Public)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/c/{slug}',
+        'controller' => CampaignController::class,
+        'action' => 'show',
+        'middleware' => []
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/campaign/{slug}',
+        'controller' => CampaignController::class,
+        'action' => 'show',
+        'middleware' => []
+    ],
+
+    // =====================
+    // Admin Campaign Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/campaigns',
+        'controller' => AdminCampaignController::class,
+        'action' => 'index',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/campaigns/create',
+        'controller' => AdminCampaignController::class,
+        'action' => 'create',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/campaigns',
+        'controller' => AdminCampaignController::class,
+        'action' => 'store',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/campaigns/{id}/edit',
+        'controller' => AdminCampaignController::class,
+        'action' => 'edit',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/campaigns/{id}',
+        'controller' => AdminCampaignController::class,
+        'action' => 'update',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/campaigns/{id}/toggle',
+        'controller' => AdminCampaignController::class,
+        'action' => 'toggle',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/campaigns/{id}/registrations',
+        'controller' => AdminCampaignController::class,
+        'action' => 'registrations',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'DELETE',
+        'path' => '/admin/campaigns/{id}',
+        'controller' => AdminCampaignController::class,
+        'action' => 'delete',
+        'middleware' => [AdminMiddleware::class]
+    ],
 ];
 
 return $routes;

@@ -143,11 +143,26 @@ class AuthController extends BaseController
             $_SESSION['referral_code'] = $referralCode;
         }
 
+        // Store campaign slug in session if present
+        $campaignSlug = $_GET['campaign'] ?? '';
+        $campaign = null;
+        if (!empty($campaignSlug)) {
+            $_SESSION['campaign_slug'] = $campaignSlug;
+            // Load campaign info for display
+            $campaignService = new CampaignService();
+            $campaign = $campaignService->findBySlug($campaignSlug);
+            if ($campaign && !$campaignService->isActive($campaign)) {
+                $campaign = null; // Don't show inactive campaign
+            }
+        }
+
         $this->currentPage = 'register';
         $this->render('auth/register', [
             'pageTitle' => 'Create Account',
             'currentPage' => $this->currentPage,
-            'referralCode' => $referralCode ?: ($_SESSION['referral_code'] ?? '')
+            'referralCode' => $referralCode ?: ($_SESSION['referral_code'] ?? ''),
+            'campaignSlug' => $campaignSlug ?: ($_SESSION['campaign_slug'] ?? ''),
+            'campaign' => $campaign
         ], ['auth'], ['auth']);
     }
 
@@ -163,6 +178,9 @@ class AuthController extends BaseController
         
         // Get referral code from URL or session
         $referralCode = $_GET['ref'] ?? $_POST['ref'] ?? $_SESSION['referral_code'] ?? '';
+        
+        // Get campaign from URL or session
+        $campaignSlug = $_GET['campaign'] ?? $_POST['campaign'] ?? $_SESSION['campaign_slug'] ?? '';
 
         // Basic validation
         $errors = [];
@@ -185,7 +203,10 @@ class AuthController extends BaseController
 
         if (!empty($errors)) {
             $this->setFlash('error', implode('. ', $errors));
-            $this->redirect('/register' . ($referralCode ? '?ref=' . urlencode($referralCode) : ''));
+            $redirectUrl = '/register';
+            if ($referralCode) $redirectUrl .= '?ref=' . urlencode($referralCode);
+            if ($campaignSlug) $redirectUrl .= ($referralCode ? '&' : '?') . 'campaign=' . urlencode($campaignSlug);
+            $this->redirect($redirectUrl);
             return;
         }
 
@@ -207,6 +228,17 @@ class AuthController extends BaseController
                 unset($_SESSION['referral_code']);
             }
 
+            // Apply campaign bonus if campaign was provided
+            if (!empty($campaignSlug)) {
+                $campaignService = new CampaignService();
+                $campaign = $campaignService->findBySlug($campaignSlug);
+                if ($campaign) {
+                    $campaignService->applyBonus($campaign['id'], $userId);
+                }
+                // Clear from session
+                unset($_SESSION['campaign_slug']);
+            }
+
             // Send verification email
             if ($user) {
                 $this->emailVerificationService->sendVerificationEmail($user);
@@ -217,7 +249,10 @@ class AuthController extends BaseController
             $this->redirect('/verify-email');
         } catch (Exception $e) {
             $this->setFlash('error', $e->getMessage());
-            $this->redirect('/register' . ($referralCode ? '?ref=' . urlencode($referralCode) : ''));
+            $redirectUrl = '/register';
+            if ($referralCode) $redirectUrl .= '?ref=' . urlencode($referralCode);
+            if ($campaignSlug) $redirectUrl .= ($referralCode ? '&' : '?') . 'campaign=' . urlencode($campaignSlug);
+            $this->redirect($redirectUrl);
         }
     }
 
