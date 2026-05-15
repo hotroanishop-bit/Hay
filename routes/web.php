@@ -1710,6 +1710,234 @@ $routes = [
         'action' => 'save',
         'middleware' => [AuthMiddleware::class]
     ],
+
+    // =====================
+    // Leaderboard Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/leaderboard',
+        'controller' => LeaderboardController::class,
+        'action' => 'index',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/api/leaderboard/{type}',
+        'controller' => LeaderboardController::class,
+        'action' => 'getData',
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    // =====================
+    // Live Chat Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/api/chat/messages',
+        'controller' => ChatController::class,
+        'action' => 'getMessages',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/api/chat/send',
+        'controller' => ChatController::class,
+        'action' => 'send',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/api/chat/status',
+        'controller' => ChatController::class,
+        'action' => 'getStatus',
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    // =====================
+    // Admin Chat Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/chat',
+        'controller' => AdminChatController::class,
+        'action' => 'index',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/chat/{userId}',
+        'controller' => AdminChatController::class,
+        'action' => 'conversation',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/chat/{userId}/send',
+        'controller' => AdminChatController::class,
+        'action' => 'send',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/api/admin/chat/unread',
+        'controller' => AdminChatController::class,
+        'action' => 'getUnreadCount',
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    // =====================
+    // Feedback Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/feedback',
+        'controller' => FeedbackController::class,
+        'action' => 'index',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/feedback',
+        'controller' => FeedbackController::class,
+        'action' => 'store',
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    // =====================
+    // Admin Feedback Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/feedback',
+        'controller' => AdminFeedbackController::class,
+        'action' => 'index',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'DELETE',
+        'path' => '/admin/feedback/{id}',
+        'controller' => AdminFeedbackController::class,
+        'action' => 'delete',
+        'middleware' => [AdminMiddleware::class]
+    ],
+
+    // =====================
+    // API Key Templates Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/api-keys/templates',
+        'controller' => KeyTemplateController::class,
+        'action' => 'index',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/api-keys/templates',
+        'controller' => KeyTemplateController::class,
+        'action' => 'store',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/api-keys/templates/{id}',
+        'controller' => KeyTemplateController::class,
+        'action' => 'show',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/api-keys/templates/{id}/apply',
+        'controller' => KeyTemplateController::class,
+        'action' => 'apply',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/api-keys/templates/{id}/update',
+        'controller' => KeyTemplateController::class,
+        'action' => 'update',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'DELETE',
+        'path' => '/api-keys/templates/{id}',
+        'controller' => KeyTemplateController::class,
+        'action' => 'delete',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/api-keys/templates/{id}/default',
+        'controller' => KeyTemplateController::class,
+        'action' => 'setDefault',
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    // =====================
+    // Quick Search Routes (Auth Required)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/api/search',
+        'controller' => SearchController::class,
+        'action' => 'search',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/api/search/recent',
+        'controller' => SearchController::class,
+        'action' => 'recent',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'DELETE',
+        'path' => '/api/search/history',
+        'controller' => SearchController::class,
+        'action' => 'clearHistory',
+        'middleware' => [AuthMiddleware::class]
+    ],
+
+    // =====================
+    // Notification API Routes
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/api/notifications/unread-count',
+        'controller' => NotificationController::class,
+        'action' => 'getUnreadCount',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/api/notifications/recent',
+        'controller' => NotificationController::class,
+        'action' => 'getRecent',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/api/notifications',
+        'controller' => NotificationController::class,
+        'action' => 'list',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/api/notifications/counts',
+        'controller' => NotificationController::class,
+        'action' => 'getCounts',
+        'middleware' => [AuthMiddleware::class]
+    ],
+    [
+        'method' => 'DELETE',
+        'path' => '/api/notifications/delete-read',
+        'controller' => NotificationController::class,
+        'action' => 'deleteRead',
+        'middleware' => [AuthMiddleware::class]
+    ],
 ];
 
 return $routes;

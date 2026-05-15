@@ -79,16 +79,23 @@
     
     <?php require VIEWS_PATH . '/partials/footer.php'; ?>
     
+    <!-- Chat Widget -->
+    <?php require VIEWS_PATH . '/partials/chat-widget.php'; ?>
+    
+    <!-- Search Modal (Command Palette) -->
+    <?php require VIEWS_PATH . '/partials/search-modal.php'; ?>
+    
     <!-- PWA Install Prompt -->
     <?php require VIEWS_PATH . '/partials/pwa-install-prompt.php'; ?>
     
-    <!-- JavaScript Loading Order: theme-switcher (must be first) -> bottom-sheet -> notifications -> charts -> global -> pwa -> page-specific -->
+    <!-- JavaScript Loading Order: theme-switcher (must be first) -> bottom-sheet -> notifications -> charts -> global -> pwa -> shortcuts -> page-specific -->
     <script src="/js/theme-switcher.js"></script>
     <script src="/js/bottom-sheet.js"></script>
     <script src="/js/notifications.js"></script>
     <script src="/js/charts.js"></script>
     <script src="/js/global.js"></script>
     <script src="/js/pwa.js"></script>
+    <script src="/js/shortcuts.js"></script>
     
     <!-- Dynamic page-specific JS -->
     <?php if (!empty($pageJsFiles)): ?>
