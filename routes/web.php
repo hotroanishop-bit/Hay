@@ -2086,6 +2086,45 @@ $routes = [
         'action' => 'delete',
         'middleware' => [AdminMiddleware::class]
     ],
+
+    // =====================
+    // Admin System Settings Routes (Enhanced)
+    // =====================
+    [
+        'method' => 'GET',
+        'path' => '/admin/system-settings',
+        'controller' => AdminSettingsController::class,
+        'action' => 'index',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'GET',
+        'path' => '/admin/system-settings/{group}',
+        'controller' => AdminSettingsController::class,
+        'action' => 'group',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/system-settings',
+        'controller' => AdminSettingsController::class,
+        'action' => 'save',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/settings/test-email',
+        'controller' => AdminSettingsController::class,
+        'action' => 'testEmail',
+        'middleware' => [AdminMiddleware::class]
+    ],
+    [
+        'method' => 'POST',
+        'path' => '/admin/settings/test-telegram',
+        'controller' => AdminSettingsController::class,
+        'action' => 'testTelegram',
+        'middleware' => [AdminMiddleware::class]
+    ],
 ];
 
 return $routes;
